@@ -59,11 +59,26 @@ func CreateCRD(clientset apiextensionsclient.Interface, crdName, rkind, rplural,
 		},
 		Spec: apiextensionsv1.CustomResourceDefinitionSpec{
 			Group: api.SchemeGroupVersion.Group,
-			Scope: apiextensionsv1.NamespaceScoped,
 			Names: apiextensionsv1.CustomResourceDefinitionNames{
 				Plural: rplural,
 				Kind:   rkind,
 			},
+			Scope: apiextensionsv1.NamespaceScoped,
+			Versions: []apiextensionsv1.CustomResourceDefinitionVersion{
+				{
+					Name:       "v1beta2",
+					Served:     true,
+					Storage:    true,
+					Deprecated: false,
+					Schema: &apiextensionsv1.CustomResourceValidation{
+						OpenAPIV3Schema: &apiextensionsv1.JSONSchemaProps{
+							Type: "object",
+						},
+					},
+				},
+			},
+			Conversion:            nil,
+			PreserveUnknownFields: false,
 		},
 	}
 	if len(shortName) != 0 {
@@ -108,4 +123,9 @@ func MustNewKubeExtClient() apiextensionsclient.Interface {
 		panic(err)
 	}
 	return apiextensionsclient.NewForConfigOrDie(cfg)
+}
+
+func newTrue() *bool {
+	b := true
+	return &b
 }
