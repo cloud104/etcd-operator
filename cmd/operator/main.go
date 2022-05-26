@@ -101,12 +101,15 @@ func main() {
 		logrus.Fatalf("failed to get hostname: %v", err)
 	}
 
+	fmt.Println("antes k8sutil.MustNewKubeClient")
 	kubecli := k8sutil.MustNewKubeClient()
+	fmt.Println(" antes prometheus...")
 
 	http.HandleFunc(probe.HTTPReadyzEndpoint, probe.ReadyzHandler)
 	http.Handle("/metrics", promhttp.Handler())
 	go http.ListenAndServe(listenAddr, nil)
 
+	fmt.Println("antes resourcelock .new")
 	rl, err := resourcelock.New(resourcelock.EndpointsLeasesResourceLock,
 		namespace,
 		"etcd-operator",
@@ -121,9 +124,11 @@ func main() {
 		logrus.Fatalf("error creating lock: %v", err)
 	}
 
+	fmt.Println("quase no fim tem um defer")
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	fmt.Println("leader election run or die")
 	leaderelection.RunOrDie(ctx, leaderelection.LeaderElectionConfig{
 		Lock:          rl,
 		LeaseDuration: 15 * time.Second,
@@ -136,8 +141,8 @@ func main() {
 			},
 		},
 	})
-
-	panic("unreachable")
+	fmt.Println("final main antes panic")
+	//panic("unreachable")
 }
 
 func run(ctx context.Context) {
