@@ -16,7 +16,6 @@ package controller
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"sync"
 
@@ -47,8 +46,6 @@ type Backup struct {
 	kubeExtCli  apiextensionsclient.Interface
 
 	backupRunnerStore sync.Map
-
-	createCRD bool
 }
 
 type BackupRunner struct {
@@ -57,34 +54,19 @@ type BackupRunner struct {
 }
 
 // New creates a backup operator.
-func New(createCRD bool) *Backup {
+func New() *Backup {
 	return &Backup{
 		logger:      logrus.WithField("pkg", "controller"),
 		namespace:   os.Getenv(constants.EnvOperatorPodNamespace),
 		kubecli:     k8sutil.MustNewKubeClient(),
 		backupCRCli: client.MustNewInCluster(),
 		kubeExtCli:  k8sutil.MustNewKubeExtClient(),
-		createCRD:   createCRD,
 	}
 }
 
 // Start starts the Backup operator.
 func (b *Backup) Start(ctx context.Context) error {
-	if b.createCRD {
-		if err := b.initCRD(); err != nil {
-			return err
-		}
-	}
-
 	go b.run(ctx)
 	<-ctx.Done()
 	return ctx.Err()
-}
-
-func (b *Backup) initCRD() error {
-	err := k8sutil.CreateCRD(b.kubeExtCli, api.EtcdBackupCRDName, api.EtcdBackupResourceKind, api.EtcdBackupResourcePlural, "")
-	if err != nil {
-		return fmt.Errorf("failed to create CRD: %v", err)
-	}
-	return k8sutil.WaitCRDReady(b.kubeExtCli, api.EtcdBackupCRDName)
 }

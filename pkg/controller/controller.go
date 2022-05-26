@@ -15,7 +15,9 @@
 package controller
 
 import (
+	"context"
 	"fmt"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"time"
 
 	api "github.com/coreos/etcd-operator/pkg/apis/etcd/v1beta2"
@@ -127,13 +129,19 @@ func (c *Controller) makeClusterConfig() cluster.Config {
 	}
 }
 
-func (c *Controller) initCRD() error {
-	err := k8sutil.CreateCRD(c.KubeExtCli, api.EtcdClusterCRDName, api.EtcdClusterResourceKind, api.EtcdClusterResourcePlural, "etcd")
-	if err != nil {
-		return fmt.Errorf("failed to create CRD: %v", err)
-	}
-	return k8sutil.WaitCRDReady(c.KubeExtCli, api.EtcdClusterCRDName)
+func (c *Controller) checkIfCRDExists(crdName string) bool {
+	_, err := c.KubeExtCli.ApiextensionsV1().CustomResourceDefinitions().Get(context.Background(), crdName, v1.GetOptions{})
+	return !k8sutil.IsKubernetesResourceNotFoundError(err)
+
 }
+
+//func (c *Controller) initCRD() error {
+//	err := k8sutil.CreateCRD(c.KubeExtCli, api.EtcdClusterCRDName, api.EtcdClusterResourceKind, api.EtcdClusterResourcePlural, "etcd")
+//	if err != nil {
+//		return fmt.Errorf("failed to create CRD: %v", err)
+//	}
+//	return k8sutil.WaitCRDReady(c.KubeExtCli, api.EtcdClusterCRDName)
+//}
 
 func getNamespacedName(c *api.EtcdCluster) string {
 	return fmt.Sprintf("%s%c%s", c.Namespace, '/', c.Name)
