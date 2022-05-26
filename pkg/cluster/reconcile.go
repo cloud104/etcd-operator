@@ -24,8 +24,8 @@ import (
 	"github.com/coreos/etcd-operator/pkg/util/etcdutil"
 	"github.com/coreos/etcd-operator/pkg/util/k8sutil"
 
-	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/etcdserver/api/v3rpc/rpctypes"
+	clientv3 "go.etcd.io/etcd/client/v3"
 	"k8s.io/api/core/v1"
 )
 

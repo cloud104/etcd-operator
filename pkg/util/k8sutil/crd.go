@@ -15,6 +15,7 @@
 package k8sutil
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -35,7 +36,7 @@ import (
 type EtcdClusterCRUpdateFunc func(*api.EtcdCluster)
 
 func GetClusterList(restcli rest.Interface, ns string) (*api.EtcdClusterList, error) {
-	b, err := restcli.Get().RequestURI(listClustersURI(ns)).DoRaw()
+	b, err := restcli.Get().RequestURI(listClustersURI(ns)).DoRaw(context.Background())
 	if err != nil {
 		return nil, err
 	}

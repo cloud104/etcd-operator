@@ -19,6 +19,7 @@ limitations under the License.
 package v1beta2
 
 import (
+	"context"
 	v1beta2 "github.com/coreos/etcd-operator/pkg/apis/etcd/v1beta2"
 	scheme "github.com/coreos/etcd-operator/pkg/generated/clientset/versioned/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -64,12 +65,13 @@ func newEtcdClusters(c *EtcdV1beta2Client, namespace string) *etcdClusters {
 // Get takes name of the etcdCluster, and returns the corresponding etcdCluster object, and an error if there is any.
 func (c *etcdClusters) Get(name string, options v1.GetOptions) (result *v1beta2.EtcdCluster, err error) {
 	result = &v1beta2.EtcdCluster{}
+	ctx := context.Background()
 	err = c.client.Get().
 		Namespace(c.ns).
 		Resource("etcdclusters").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
@@ -77,11 +79,12 @@ func (c *etcdClusters) Get(name string, options v1.GetOptions) (result *v1beta2.
 // List takes label and field selectors, and returns the list of EtcdClusters that match those selectors.
 func (c *etcdClusters) List(opts v1.ListOptions) (result *v1beta2.EtcdClusterList, err error) {
 	result = &v1beta2.EtcdClusterList{}
+	ctx := context.Background()
 	err = c.client.Get().
 		Namespace(c.ns).
 		Resource("etcdclusters").
 		VersionedParams(&opts, scheme.ParameterCodec).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
@@ -89,21 +92,23 @@ func (c *etcdClusters) List(opts v1.ListOptions) (result *v1beta2.EtcdClusterLis
 // Watch returns a watch.Interface that watches the requested etcdClusters.
 func (c *etcdClusters) Watch(opts v1.ListOptions) (watch.Interface, error) {
 	opts.Watch = true
+	ctx := context.Background()
 	return c.client.Get().
 		Namespace(c.ns).
 		Resource("etcdclusters").
 		VersionedParams(&opts, scheme.ParameterCodec).
-		Watch()
+		Watch(ctx)
 }
 
 // Create takes the representation of a etcdCluster and creates it.  Returns the server's representation of the etcdCluster, and an error, if there is any.
 func (c *etcdClusters) Create(etcdCluster *v1beta2.EtcdCluster) (result *v1beta2.EtcdCluster, err error) {
 	result = &v1beta2.EtcdCluster{}
+	ctx := context.Background()
 	err = c.client.Post().
 		Namespace(c.ns).
 		Resource("etcdclusters").
 		Body(etcdCluster).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
@@ -111,12 +116,13 @@ func (c *etcdClusters) Create(etcdCluster *v1beta2.EtcdCluster) (result *v1beta2
 // Update takes the representation of a etcdCluster and updates it. Returns the server's representation of the etcdCluster, and an error, if there is any.
 func (c *etcdClusters) Update(etcdCluster *v1beta2.EtcdCluster) (result *v1beta2.EtcdCluster, err error) {
 	result = &v1beta2.EtcdCluster{}
+	ctx := context.Background()
 	err = c.client.Put().
 		Namespace(c.ns).
 		Resource("etcdclusters").
 		Name(etcdCluster.Name).
 		Body(etcdCluster).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
@@ -126,13 +132,14 @@ func (c *etcdClusters) Update(etcdCluster *v1beta2.EtcdCluster) (result *v1beta2
 
 func (c *etcdClusters) UpdateStatus(etcdCluster *v1beta2.EtcdCluster) (result *v1beta2.EtcdCluster, err error) {
 	result = &v1beta2.EtcdCluster{}
+	ctx := context.Background()
 	err = c.client.Put().
 		Namespace(c.ns).
 		Resource("etcdclusters").
 		Name(etcdCluster.Name).
 		SubResource("status").
 		Body(etcdCluster).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
@@ -144,7 +151,7 @@ func (c *etcdClusters) Delete(name string, options *v1.DeleteOptions) error {
 		Resource("etcdclusters").
 		Name(name).
 		Body(options).
-		Do().
+		Do(context.Background()).
 		Error()
 }
 
@@ -155,7 +162,7 @@ func (c *etcdClusters) DeleteCollection(options *v1.DeleteOptions, listOptions v
 		Resource("etcdclusters").
 		VersionedParams(&listOptions, scheme.ParameterCodec).
 		Body(options).
-		Do().
+		Do(context.Background()).
 		Error()
 }
 
@@ -168,7 +175,7 @@ func (c *etcdClusters) Patch(name string, pt types.PatchType, data []byte, subre
 		SubResource(subresources...).
 		Name(name).
 		Body(data).
-		Do().
+		Do(context.Background()).
 		Into(result)
 	return
 }
