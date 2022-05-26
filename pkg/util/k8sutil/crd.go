@@ -73,6 +73,22 @@ func CreateCRD(clientset apiextensionsclient.Interface, crdName, rkind, rplural,
 					Schema: &apiextensionsv1.CustomResourceValidation{
 						OpenAPIV3Schema: &apiextensionsv1.JSONSchemaProps{
 							Type: "object",
+							Properties: map[string]apiextensionsv1.JSONSchemaProps{
+								"spec": {
+									Type: "object",
+									Properties: map[string]apiextensionsv1.JSONSchemaProps{
+										"size": {
+											Type: "integer",
+										},
+										"version": {
+											Type: "string",
+										},
+										"repository": {
+											Type: "string",
+										},
+									},
+								},
+							},
 						},
 					},
 				},
