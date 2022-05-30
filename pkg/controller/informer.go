@@ -38,15 +38,15 @@ func init() {
 
 func (c *Controller) Start() error {
 	// TODO: get rid of this init code. CRD and storage class will be managed outside of operator.
-	for {
-		err := c.initResource()
-		if err == nil {
-			break
-		}
-		c.logger.Errorf("initialization failed: %v", err)
-		c.logger.Infof("retry in %v...", initRetryWaitTime)
-		time.Sleep(initRetryWaitTime)
-	}
+	//for {
+	//	err := c.initResource()
+	//	if err == nil {
+	//		break
+	//	}
+	//	c.logger.Errorf("initialization failed: %v", err)
+	//	c.logger.Infof("retry in %v...", initRetryWaitTime)
+	//	time.Sleep(initRetryWaitTime)
+	//}
 
 	probe.SetReady()
 	c.run()
@@ -78,15 +78,15 @@ func (c *Controller) run() {
 	informer.Run(ctx.Done())
 }
 
-func (c *Controller) initResource() error {
-	if c.Config.CreateCRD {
-		err := c.initCRD()
-		if err != nil {
-			return fmt.Errorf("fail to init CRD: %v", err)
-		}
-	}
-	return nil
-}
+//func (c *Controller) initResource() error {
+//	if c.Config.CreateCRD {
+//		err := c.initCRD()
+//		if err != nil {
+//			return fmt.Errorf("fail to init CRD: %v", err)
+//		}
+//	}
+//	return nil
+//}
 
 func (c *Controller) onAddEtcdClus(obj interface{}) {
 	c.syncEtcdClus(obj.(*api.EtcdCluster))

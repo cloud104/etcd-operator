@@ -39,7 +39,6 @@ import (
 
 var (
 	namespace string
-	createCRD bool
 )
 
 const (
@@ -48,7 +47,6 @@ const (
 )
 
 func init() {
-	flag.BoolVar(&createCRD, "create-crd", true, "The restore operator will not create the EtcdRestore CRD when this flag is set to false.")
 	flag.Parse()
 }
 
@@ -120,7 +118,7 @@ func createRecorder(kubecli kubernetes.Interface, name, namespace string) record
 func run(ctx context.Context) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
-	c := controller.New(createCRD, namespace, fmt.Sprintf("%s:%d", serviceNameForMyself, servicePortForMyself))
+	c := controller.New(namespace, fmt.Sprintf("%s:%d", serviceNameForMyself, servicePortForMyself))
 	err := c.Start(ctx)
 	if err != nil {
 		logrus.Fatalf("etcd restore operator stopped with error: %v", err)

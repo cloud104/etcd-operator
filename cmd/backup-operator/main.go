@@ -36,12 +36,7 @@ import (
 	"k8s.io/client-go/tools/record"
 )
 
-var (
-	createCRD bool
-)
-
 func init() {
-	flag.BoolVar(&createCRD, "create-crd", true, "The backup operator will not create the EtcdBackup CRD when this flag is set to false.")
 	flag.Parse()
 }
 
@@ -107,7 +102,7 @@ func createRecorder(kubecli kubernetes.Interface, name, namespace string) record
 func run(ctx context.Context) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
-	c := controller.New(createCRD)
+	c := controller.New()
 	err := c.Start(ctx)
 	if err != nil {
 		logrus.Fatalf("operator stopped with error: %v", err)
