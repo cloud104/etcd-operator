@@ -24,7 +24,7 @@ import (
 	controller "github.com/coreos/etcd-operator/pkg/controller/backup-operator"
 	"github.com/coreos/etcd-operator/pkg/util/constants"
 	"github.com/coreos/etcd-operator/pkg/util/k8sutil"
-	version "github.com/coreos/etcd-operator/version"
+	"github.com/coreos/etcd-operator/version"
 
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
@@ -66,10 +66,11 @@ func main() {
 
 	kubecli := k8sutil.MustNewKubeClient()
 	rl, err := resourcelock.New(
-		resourcelock.EndpointsResourceLock,
+		resourcelock.EndpointsLeasesResourceLock,
 		namespace,
 		"etcd-backup-operator",
-		kubecli.Core(),
+		kubecli.CoreV1(),
+		kubecli.CoordinationV1(),
 		resourcelock.ResourceLockConfig{
 			Identity:      id,
 			EventRecorder: createRecorder(kubecli, name, namespace),
@@ -99,7 +100,7 @@ func main() {
 func createRecorder(kubecli kubernetes.Interface, name, namespace string) record.EventRecorder {
 	eventBroadcaster := record.NewBroadcaster()
 	eventBroadcaster.StartLogging(logrus.Infof)
-	eventBroadcaster.StartRecordingToSink(&v1core.EventSinkImpl{Interface: v1core.New(kubecli.Core().RESTClient()).Events(namespace)})
+	eventBroadcaster.StartRecordingToSink(&v1core.EventSinkImpl{Interface: v1core.New(kubecli.CoreV1().RESTClient()).Events(namespace)})
 	return eventBroadcaster.NewRecorder(scheme.Scheme, v1.EventSource{Component: name})
 }
 

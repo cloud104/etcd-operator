@@ -91,9 +91,11 @@ func CreateCRD(clientset apiextensionsclient.Interface, crdName, rkind, rplural,
 							},
 						},
 					},
+					Subresources: &apiextensionsv1.CustomResourceSubresources{
+						Status: &apiextensionsv1.CustomResourceSubresourceStatus{},
+					},
 				},
 			},
-			Conversion:            nil,
 			PreserveUnknownFields: false,
 		},
 	}
@@ -141,7 +143,6 @@ func MustNewKubeExtClient() apiextensionsclient.Interface {
 	return apiextensionsclient.NewForConfigOrDie(cfg)
 }
 
-func newTrue() *bool {
-	b := true
-	return &b
+func NewCreateCRD() {
+
 }
