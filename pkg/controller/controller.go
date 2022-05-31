@@ -131,7 +131,7 @@ func (c *Controller) makeClusterConfig() cluster.Config {
 
 func (c *Controller) checkIfCRDExists(crdName string) bool {
 	_, err := c.KubeExtCli.ApiextensionsV1().CustomResourceDefinitions().Get(context.Background(), crdName, v1.GetOptions{})
-	return k8sutil.IsKubernetesResourceNotFoundError(err)
+	return !k8sutil.IsKubernetesResourceNotFoundError(err)
 
 }
 
