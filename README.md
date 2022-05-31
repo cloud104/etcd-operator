@@ -1,8 +1,12 @@
 # etcd operator
 
-### Project status: archived
+### Project status: Working on new Kubernetes Clusters
 
-This project is no longer actively developed or maintained. The project exists here for historical reference. If you are interested in the future of the project and taking over stewardship, please contact etcd-dev@googlegroups.com.
+The TKS Team make a small upgrade to keep this version working with new clusters.
+
+We will be very reactive to fix things / implement new functionalities. 
+
+If you want help us to keep this software up and running, send your PR!
 
 ### Overview
 
@@ -26,8 +30,8 @@ See the [Resources and Labels](./doc/user/resource_labels.md) doc for an overvie
 
 ## Requirements
 
-- Kubernetes 1.8+
-- etcd 3.2.13+
+- Kubernetes 1.17+
+- etcd 3.2.13+ (tested with 3.5.2 and working as well)
 
 ## Demo
 
