@@ -38,15 +38,15 @@ func init() {
 
 func (c *Controller) Start() error {
 	// TODO: get rid of this init code. CRD and storage class will be managed outside of operator.
-	//for {
-	//	err := c.initResource()
-	//	if err == nil {
-	//		break
-	//	}
-	//	c.logger.Errorf("initialization failed: %v", err)
-	//	c.logger.Infof("retry in %v...", initRetryWaitTime)
-	//	time.Sleep(initRetryWaitTime)
-	//}
+	for {
+		if c.checkIfCRDExists("etcdclusters.etcd.database.coreos.com") {
+			fmt.Println("deu true....")
+			break
+		}
+		c.logger.Errorf("please install the CRD's. You can find the CRD files on docs/example/crd")
+		c.logger.Infof("retry in %v...", initRetryWaitTime)
+		time.Sleep(initRetryWaitTime)
+	}
 
 	probe.SetReady()
 	c.run()
