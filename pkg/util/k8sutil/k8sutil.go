@@ -105,7 +105,7 @@ func makeRestoreInitContainers(backupURL *url.URL, token, repo, version string, 
 	return []v1.Container{
 		{
 			Name:  "fetch-backup",
-			Image: "tutum/curl",
+			Image: "us-east1-docker.pkg.dev/tks-gcr-pub/etcd-operator/curl",
 			Command: []string{
 				"/bin/bash", "-ec",
 				fmt.Sprintf(`
