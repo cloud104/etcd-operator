@@ -21,7 +21,6 @@ import (
 	"net"
 	"net/url"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 
@@ -75,8 +74,6 @@ const (
 	defaultDNSTimeout = int64(0)
 )
 
-const TolerateUnreadyEndpointsAnnotation = "service.alpha.kubernetes.io/tolerate-unready-endpoints"
-
 func GetEtcdVersion(pod *v1.Pod) string {
 	return pod.Annotations[etcdVersionAnnotationKey]
 }
@@ -105,7 +102,7 @@ func makeRestoreInitContainers(backupURL *url.URL, token, repo, version string, 
 	return []v1.Container{
 		{
 			Name:  "fetch-backup",
-			Image: "tutum/curl",
+			Image: "us-east1-docker.pkg.dev/tks-gcr-pub/etcd-operator/curl",
 			Command: []string{
 				"/bin/bash", "-ec",
 				fmt.Sprintf(`
@@ -233,15 +230,16 @@ func newEtcdServiceManifest(svcName, clusterName, clusterIP string, ports []v1.S
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   svcName,
 			Labels: labels,
-			Annotations: map[string]string{
-				TolerateUnreadyEndpointsAnnotation: strconv.FormatBool(publishNotReadyAddresses),
-			},
+			//Annotations: map[string]string{ // deprecated annotation on kubernetes 1.24
+			//	TolerateUnreadyEndpointsAnnotation: strconv.FormatBool(publishNotReadyAddresses),
+			//},
 		},
 		Spec: v1.ServiceSpec{
-			Ports:     ports,
-			Selector:  labels,
-			ClusterIP: clusterIP,
-			// PublishNotReadyAddresses: publishNotReadyAddresses, // TODO(ckoehn): Activate once TolerateUnreadyEndpointsAnnotation is deprecated.
+
+			Ports:                    ports,
+			Selector:                 labels,
+			ClusterIP:                clusterIP,
+			PublishNotReadyAddresses: publishNotReadyAddresses,
 		},
 	}
 	return svc
