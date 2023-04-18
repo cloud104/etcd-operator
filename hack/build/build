@@ -5,6 +5,8 @@ hack/build/backup-operator/build
 hack/build/restore-operator/build
 
 VERSION=$(grep 'Version = ' version/version.go|cut -d '=' -f2|sed -e  's| ||g' -e 's|"||g' -e 's|+git||g')
-
-docker build -f hack/build/Dockerfile -t us-east1-docker.pkg.dev/tks-gcr-pub/etcd-operator/etcd-operator:v0.10.2-tks .
-docker push us-east1-docker.pkg.dev/tks-gcr-pub/etcd-operator/etcd-operator:v0.10.2-tks
+REPO=${REPO:="us-east1-docker.pkg.dev/tks-gcr-pub/etcd-operator/etcd-operator"}
+docker build -f hack/build/Dockerfile -t $REPO:v$VERSION .
+if [ -z "$DISABLE_PUSH" ]; then
+  docker push $REPO:v$VERSION
+fi
