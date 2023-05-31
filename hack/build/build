@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+export GO111MODULE="on"
+
 hack/build/operator/build
 hack/build/backup-operator/build
 hack/build/restore-operator/build
