@@ -19,9 +19,9 @@ import (
 	"testing"
 	"time"
 
-	api "github.com/coreos/etcd-operator/pkg/apis/etcd/v1beta2"
-	"github.com/coreos/etcd-operator/test/e2e/e2eutil"
-	"github.com/coreos/etcd-operator/test/e2e/framework"
+	api "github.com/cloud104/etcd-operator/pkg/apis/etcd/v1beta2"
+	"github.com/cloud104/etcd-operator/test/e2e/e2eutil"
+	"github.com/cloud104/etcd-operator/test/e2e/framework"
 )
 
 func TestCreateCluster(t *testing.T) {

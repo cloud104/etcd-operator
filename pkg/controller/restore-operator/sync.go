@@ -18,11 +18,11 @@ import (
 	"context"
 	"fmt"
 
-	api "github.com/coreos/etcd-operator/pkg/apis/etcd/v1beta2"
-	"github.com/coreos/etcd-operator/pkg/backup/backupapi"
-	"github.com/coreos/etcd-operator/pkg/util/etcdutil"
-	"github.com/coreos/etcd-operator/pkg/util/k8sutil"
-	"github.com/coreos/etcd-operator/pkg/util/retryutil"
+	api "github.com/cloud104/etcd-operator/pkg/apis/etcd/v1beta2"
+	"github.com/cloud104/etcd-operator/pkg/backup/backupapi"
+	"github.com/cloud104/etcd-operator/pkg/util/etcdutil"
+	"github.com/cloud104/etcd-operator/pkg/util/k8sutil"
+	"github.com/cloud104/etcd-operator/pkg/util/retryutil"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -132,14 +132,16 @@ func (r *Restore) handleErr(err error, key interface{}) {
 // - fetches and deletes the reference EtcdCluster CR
 // - creates new EtcdCluster CR with same metadata and spec as the reference CR
 // - and spec.paused=true and status.phase="Running"
-//  - spec.paused=true: keep operator from touching membership
-// 	- status.phase=Running:
-//  	1. expect operator to setup the services
-//  	2. make operator ignore the "create seed member" phase
+//   - spec.paused=true: keep operator from touching membership
+//   - status.phase=Running:
+//     1. expect operator to setup the services
+//     2. make operator ignore the "create seed member" phase
+//
 // - create seed member that would restore data from backup
-// 	- ownerRef to above EtcdCluster CR
+//   - ownerRef to above EtcdCluster CR
+//
 // - update EtcdCluster CR spec.paused=false
-// 	- etcd operator should pick up the membership and scale the etcd cluster
+//   - etcd operator should pick up the membership and scale the etcd cluster
 func (r *Restore) prepareSeed(er *api.EtcdRestore) (err error) {
 	defer func() {
 		if err != nil {
