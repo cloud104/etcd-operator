@@ -2,7 +2,13 @@
     "CN": "etcd server",
     "hosts": [
         "*.example.default.svc",
+        "*.example.default.svc.cluster.local",
+        "*.example-client.default.svc",
+        "*.example-client.default.svc.cluster.local",
+        "example.default.svc",
+        "example.default.svc.cluster.local",
         "example-client.default.svc",
+        "example-client.default.svc.cluster.local",
         "localhost"
     ],
     "key": {
