@@ -101,7 +101,7 @@ func main() {
 	http.Handle("/metrics", promhttp.Handler())
 	go http.ListenAndServe(listenAddr, nil)
 
-	rl, err := resourcelock.New(resourcelock.EndpointsLeasesResourceLock,
+	rl, err := resourcelock.New(resourcelock.LeasesResourceLock,
 		namespace,
 		"etcd-operator",
 		kubecli.CoreV1(),
