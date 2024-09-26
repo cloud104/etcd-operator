@@ -16,11 +16,9 @@ package k8sutil
 
 import (
 	"encoding/json"
-	"fmt"
+	"k8s.io/apimachinery/pkg/util/intstr"
 
 	api "github.com/cloud104/etcd-operator/pkg/apis/etcd/v1beta2"
-	"github.com/cloud104/etcd-operator/pkg/util/etcdutil"
-
 	"k8s.io/api/core/v1"
 )
 
@@ -50,6 +48,11 @@ func etcdContainer(cmd []string, repo, version string) v1.Container {
 				ContainerPort: int32(EtcdClientPort),
 				Protocol:      v1.ProtocolTCP,
 			},
+			{
+				Name:          "metrics",
+				ContainerPort: int32(8080),
+				Protocol:      v1.ProtocolTCP,
+			},
 		},
 		VolumeMounts: etcdVolumeMounts(),
 	}
@@ -68,16 +71,18 @@ func containerWithRequirements(c v1.Container, r v1.ResourceRequirements) v1.Con
 	return c
 }
 
-func newEtcdProbe(isSecure bool) *v1.Probe {
-	// etcd pod is healthy only if it can participate in consensus
-	cmd := "ETCDCTL_API=3 etcdctl endpoint status"
-	if isSecure {
-		tlsFlags := fmt.Sprintf("--cert=%[1]s/%[2]s --key=%[1]s/%[3]s --cacert=%[1]s/%[4]s", operatorEtcdTLSDir, etcdutil.CliCertFile, etcdutil.CliKeyFile, etcdutil.CliCAFile)
-		cmd = fmt.Sprintf("ETCDCTL_API=3 etcdctl --endpoints=https://localhost:%d %s endpoint status", EtcdClientPort, tlsFlags)
-	}
+func newEtcdLivessProbe(isSecure bool) *v1.Probe {
 	return &v1.Probe{
 		ProbeHandler: v1.ProbeHandler{
-			Exec: &v1.ExecAction{Command: []string{"/bin/sh", "-ec", cmd}},
+			HTTPGet: &v1.HTTPGetAction{
+				Path: "/livez",
+				Port: intstr.IntOrString{
+					Type:   intstr.Int,
+					IntVal: 8080,
+				},
+				Scheme:      "HTTP",
+				HTTPHeaders: nil,
+			},
 		},
 		InitialDelaySeconds: 10,
 		TimeoutSeconds:      10,
@@ -85,7 +90,25 @@ func newEtcdProbe(isSecure bool) *v1.Probe {
 		FailureThreshold:    3,
 	}
 }
-
+func newEtcdReadynessProbe(isSecure bool) *v1.Probe {
+	return &v1.Probe{
+		ProbeHandler: v1.ProbeHandler{
+			HTTPGet: &v1.HTTPGetAction{
+				Path: "/readyz",
+				Port: intstr.IntOrString{
+					Type:   intstr.Int,
+					IntVal: 8080,
+				},
+				Scheme:      "HTTP",
+				HTTPHeaders: nil,
+			},
+		},
+		InitialDelaySeconds: 1,
+		TimeoutSeconds:      5,
+		PeriodSeconds:       5,
+		FailureThreshold:    3,
+	}
+}
 func applyPodPolicy(clusterName string, pod *v1.Pod, policy *api.PodPolicy) {
 	if policy == nil {
 		return
