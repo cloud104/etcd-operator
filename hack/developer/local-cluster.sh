@@ -10,3 +10,5 @@
  delete(){
   kind delete cluster --name etcd-operator
 }
+
+$1
