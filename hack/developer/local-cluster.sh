@@ -17,7 +17,7 @@ if [ -z "$kubectl" ]; then
     curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
     sudo install kubectl /usr/local/bin/
 fi
-# Verifica se o tcloud-cli está instalado
+# Verifica se o skaffold está instalado
 if [ -z "$skaffold" ]; then
    echo "O skaffold não está instalado. Instale-o primeiro."
    # For Linux x86_64 (amd64)
