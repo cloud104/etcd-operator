@@ -16,6 +16,8 @@ package k8sutil
 
 import (
 	"encoding/json"
+	"fmt"
+	"github.com/cloud104/etcd-operator/pkg/util/etcdutil"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	api "github.com/cloud104/etcd-operator/pkg/apis/etcd/v1beta2"
@@ -48,6 +50,7 @@ func etcdContainer(cmd []string, repo, version string) v1.Container {
 				ContainerPort: int32(EtcdClientPort),
 				Protocol:      v1.ProtocolTCP,
 			},
+
 			{
 				Name:          "metrics",
 				ContainerPort: int32(8080),
@@ -71,7 +74,7 @@ func containerWithRequirements(c v1.Container, r v1.ResourceRequirements) v1.Con
 	return c
 }
 
-func newEtcdLivessProbe(isSecure bool) *v1.Probe {
+func NewEtcdLivessProbe(isSecure bool) *v1.Probe {
 	return &v1.Probe{
 		ProbeHandler: v1.ProbeHandler{
 			HTTPGet: &v1.HTTPGetAction{
@@ -90,7 +93,7 @@ func newEtcdLivessProbe(isSecure bool) *v1.Probe {
 		FailureThreshold:    3,
 	}
 }
-func newEtcdReadynessProbe(isSecure bool) *v1.Probe {
+func NewEtcdReadynessProbe(isSecure bool) *v1.Probe {
 	return &v1.Probe{
 		ProbeHandler: v1.ProbeHandler{
 			HTTPGet: &v1.HTTPGetAction{
@@ -109,6 +112,25 @@ func newEtcdReadynessProbe(isSecure bool) *v1.Probe {
 		FailureThreshold:    3,
 	}
 }
+
+func NewEtcdProbe(isSecure bool) *v1.Probe {
+	// etcd pod is healthy only if it can participate in consensus
+	cmd := "ETCDCTL_API=3 etcdctl endpoint status"
+	if isSecure {
+		tlsFlags := fmt.Sprintf("--cert=%[1]s/%[2]s --key=%[1]s/%[3]s --cacert=%[1]s/%[4]s", operatorEtcdTLSDir, etcdutil.CliCertFile, etcdutil.CliKeyFile, etcdutil.CliCAFile)
+		cmd = fmt.Sprintf("ETCDCTL_API=3 etcdctl --endpoints=https://localhost:%d %s endpoint status", EtcdClientPort, tlsFlags)
+	}
+	return &v1.Probe{
+		ProbeHandler: v1.ProbeHandler{
+			Exec: &v1.ExecAction{Command: []string{"/bin/sh", "-ec", cmd}},
+		},
+		InitialDelaySeconds: 10,
+		TimeoutSeconds:      10,
+		PeriodSeconds:       60,
+		FailureThreshold:    3,
+	}
+}
+
 func applyPodPolicy(clusterName string, pod *v1.Pod, policy *api.PodPolicy) {
 	if policy == nil {
 		return

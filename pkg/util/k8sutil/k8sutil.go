@@ -18,6 +18,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/Masterminds/semver/v3"
+	"github.com/sirupsen/logrus"
 	"net"
 	"net/url"
 	"os"
@@ -71,7 +73,8 @@ const (
 
 	// defaultDNSTimeout is the default maximum allowed time for the init container of the etcd pod
 	// to reverse DNS lookup its IP. The default behavior is to wait forever and has a value of 0.
-	defaultDNSTimeout = int64(0)
+	defaultDNSTimeout        = int64(0)
+	etcdVersionWithHTTPProbe = "> 3.5.6"
 )
 
 func GetEtcdVersion(pod *v1.Pod) string {
@@ -298,9 +301,25 @@ func NewEtcdPodPVC(m *etcdutil.Member, pvcSpec v1.PersistentVolumeClaimSpec, clu
 
 func newEtcdPod(m *etcdutil.Member, initialCluster []string, clusterName, state, token string, cs api.ClusterSpec) *v1.Pod {
 	commands := fmt.Sprintf("/usr/local/bin/etcd --data-dir=%s --name=%s --initial-advertise-peer-urls=%s "+
-		"--listen-peer-urls=%s --listen-client-urls=%s --advertise-client-urls=%s --listen-metrics-urls=%s "+
-		"--initial-cluster=%s --initial-cluster-state=%s --experimental-initial-corrupt-check=true --experimental-watch-progress-notify-interval=5s",
-		dataDir, m.Name, m.PeerURL(), m.ListenPeerURL(), m.ListenClientURL(), m.ClientURL(), m.ListenMetricURL(), strings.Join(initialCluster, ","), state)
+		"--listen-peer-urls=%s --listen-client-urls=%s --advertise-client-urls=%s "+
+		"--initial-cluster=%s --initial-cluster-state=%s",
+		dataDir, m.Name, m.PeerURL(), m.ListenPeerURL(), m.ListenClientURL(), m.ClientURL(), strings.Join(initialCluster, ","), state)
+	etcdVersion, err := semver.NewConstraint(etcdVersionWithHTTPProbe)
+	if err != nil {
+		// Handle constraint not being parsable.
+	}
+	version, err := semver.NewVersion(cs.Version)
+	if err != nil {
+		// Handle version not being parsable.
+	}
+	if etcdVersion.Check(version) {
+		logrus.Println("O etcdcluster esta nessa versão: %v", cs.Version)
+		//Command to create pod etcd on versions greater than 3.5.6
+		commands = fmt.Sprintf("/usr/local/bin/etcd --data-dir=%s --name=%s --initial-advertise-peer-urls=%s "+
+			"--listen-peer-urls=%s --listen-client-urls=%s --advertise-client-urls=%s --listen-metrics-urls=%s "+
+			"--initial-cluster=%s --initial-cluster-state=%s --experimental-initial-corrupt-check=true --experimental-watch-progress-notify-interval=5s",
+			dataDir, m.Name, m.PeerURL(), m.ListenPeerURL(), m.ListenClientURL(), m.ClientURL(), m.ListenMetricURL(), strings.Join(initialCluster, ","), state)
+	}
 	if m.SecurePeer {
 		commands += fmt.Sprintf(" --peer-client-cert-auth=true --peer-trusted-ca-file=%[1]s/peer-ca.crt --peer-cert-file=%[1]s/peer.crt --peer-key-file=%[1]s/peer.key", peerTLSDir)
 	}
@@ -317,14 +336,20 @@ func newEtcdPod(m *etcdutil.Member, initialCluster []string, clusterName, state,
 		"etcd_cluster": clusterName,
 	}
 
-	livenessProbe := newEtcdLivessProbe(cs.TLS.IsSecureClient())
-	readinessProbe := newEtcdReadynessProbe(cs.TLS.IsSecureClient())
+	livenessProbe := NewEtcdProbe(cs.TLS.IsSecureClient())
+	readinessProbe := NewEtcdProbe(cs.TLS.IsSecureClient())
 
 	readinessProbe.InitialDelaySeconds = 1
 	readinessProbe.TimeoutSeconds = 5
 	readinessProbe.PeriodSeconds = 5
 	readinessProbe.FailureThreshold = 3
 
+	if etcdVersion.Check(version) {
+		//Command to create pod etcd on versions greater than 3.5.7
+		logrus.Println("O etcdcluster esta nessa versão: %v", cs.Version)
+		livenessProbe = NewEtcdLivessProbe(cs.TLS.IsSecureClient())
+		readinessProbe = NewEtcdReadynessProbe(cs.TLS.IsSecureClient())
+	}
 	container := containerWithProbes(
 		etcdContainer(strings.Split(commands, " "), cs.Repository, cs.Version),
 		livenessProbe,
