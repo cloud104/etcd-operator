@@ -53,7 +53,7 @@ func etcdContainer(cmd []string, repo, version string) v1.Container {
 
 			{
 				Name:          "metrics",
-				ContainerPort: int32(8080),
+				ContainerPort: int32(2381),
 				Protocol:      v1.ProtocolTCP,
 			},
 		},
@@ -63,9 +63,14 @@ func etcdContainer(cmd []string, repo, version string) v1.Container {
 	return c
 }
 
-func containerWithProbes(c v1.Container, lp *v1.Probe, rp *v1.Probe) v1.Container {
+func containerWithProbes(c v1.Container, lp *v1.Probe, rp *v1.Probe, st *v1.Probe) v1.Container {
 	c.LivenessProbe = lp
-	c.ReadinessProbe = rp
+	if rp != nil {
+		c.ReadinessProbe = rp
+	}
+	if st != nil {
+		c.StartupProbe = st
+	}
 	return c
 }
 
@@ -74,14 +79,14 @@ func containerWithRequirements(c v1.Container, r v1.ResourceRequirements) v1.Con
 	return c
 }
 
-func NewEtcdLivessProbe(isSecure bool) *v1.Probe {
+func NewEtcdLivessProbe(path string, isSecure bool) *v1.Probe {
 	return &v1.Probe{
 		ProbeHandler: v1.ProbeHandler{
 			HTTPGet: &v1.HTTPGetAction{
-				Path: "/livez",
+				Path: fmt.Sprintf("%s", path),
 				Port: intstr.IntOrString{
 					Type:   intstr.Int,
-					IntVal: 8080,
+					IntVal: 2381,
 				},
 				Scheme:      "HTTP",
 				HTTPHeaders: nil,
@@ -93,14 +98,14 @@ func NewEtcdLivessProbe(isSecure bool) *v1.Probe {
 		FailureThreshold:    3,
 	}
 }
-func NewEtcdReadynessProbe(isSecure bool) *v1.Probe {
+func NewEtcdReadynessProbe(path string, isSecure bool) *v1.Probe {
 	return &v1.Probe{
 		ProbeHandler: v1.ProbeHandler{
 			HTTPGet: &v1.HTTPGetAction{
-				Path: "/readyz",
+				Path: fmt.Sprintf("%s", path),
 				Port: intstr.IntOrString{
 					Type:   intstr.Int,
-					IntVal: 8080,
+					IntVal: 2381,
 				},
 				Scheme:      "HTTP",
 				HTTPHeaders: nil,

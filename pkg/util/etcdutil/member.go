@@ -72,7 +72,7 @@ func (m *Member) ListenPeerURL() string {
 	return fmt.Sprintf("%s://0.0.0.0:2380", m.peerScheme())
 }
 func (m *Member) ListenMetricURL() string {
-	return fmt.Sprintf("%s://0.0.0.0:8080", m.metricsScheme())
+	return fmt.Sprintf("%s://0.0.0.0:2381", m.metricsScheme())
 }
 
 func (m *Member) PeerURL() string {
