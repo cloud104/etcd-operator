@@ -56,7 +56,7 @@ func (c *Cluster) upgradeOneMember(memberName string) error {
 		if podVersion.Equal(semver.MustParse("3.5.7")) {
 			err = c.rolloutOneMember(memberName, pod.Namespace)
 			if err != nil {
-				c.logger.Errorf("failed to rolloutOneMember: %v", err)
+				return fmt.Errorf("failed to rolloutOneMember: %v", err)
 			}
 		}
 		c.logger.Infof("STATUS is: %v", c.cluster.Status.Members.Ready)
