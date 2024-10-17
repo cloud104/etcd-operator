@@ -20,7 +20,6 @@ import (
 	"github.com/Masterminds/semver/v3"
 	"github.com/cloud104/etcd-operator/pkg/util/etcdutil"
 	"github.com/cloud104/etcd-operator/pkg/util/k8sutil"
-	"github.com/sirupsen/logrus"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -42,7 +41,7 @@ func (c *Cluster) upgradeOneMember(memberName string) error {
 	pod.Spec.Containers[0].Image = k8sutil.ImageName(c.cluster.Spec.Repository, c.cluster.Spec.Version)
 	clusterSpecVersion, err := semver.NewVersion(c.cluster.Spec.Version)
 	if err != nil {
-		logrus.Errorf("erros parsing etcd version %s", c.cluster.Spec.Version)
+		return fmt.Errorf("erros parsing etcd version %s", c.cluster.Spec.Version)
 	}
 	switch {
 	case clusterSpecVersion.LessThanEqual(semver.MustParse("3.5.6")):
@@ -88,13 +87,13 @@ func (c *Cluster) upgradeOneMember(memberName string) error {
 		if podVersion.Equal(semver.MustParse("3.5.6")) {
 			err = c.rolloutOneMember(memberName, pod.Namespace)
 			if err != nil {
-				c.logger.Errorf("failed to rolloutOneMember: %v", err)
+				return fmt.Errorf("failed to rolloutOneMember: %v", err)
 			}
 		}
 		if podVersion.Equal(semver.MustParse("3.5.12")) {
 			err = c.rolloutOneMember(memberName, pod.Namespace)
 			if err != nil {
-				c.logger.Errorf("failed to rolloutOneMember: %v", err)
+				return fmt.Errorf("failed to rolloutOneMember: %v", err)
 			}
 		}
 		c.logger.Infof("STATUS is: %v", c.cluster.Status.Members.Ready)
@@ -125,7 +124,7 @@ func (c *Cluster) upgradeOneMember(memberName string) error {
 		if podVersion.Equal(semver.MustParse("3.5.11")) {
 			err = c.rolloutOneMember(memberName, pod.Namespace)
 			if err != nil {
-				c.logger.Errorf("failed to rolloutOneMember: %v", err)
+				return fmt.Errorf("failed to rolloutOneMember: %v", err)
 			}
 		}
 		c.logger.Infof("STATUS is: %v", c.cluster.Status.Members.Ready)
