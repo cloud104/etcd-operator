@@ -83,7 +83,7 @@ func NewEtcdLivessProbe(path string, isSecure bool) *v1.Probe {
 	return &v1.Probe{
 		ProbeHandler: v1.ProbeHandler{
 			HTTPGet: &v1.HTTPGetAction{
-				Path: fmt.Sprintf("%s", path),
+				Path: path,
 				Port: intstr.IntOrString{
 					Type:   intstr.Int,
 					IntVal: 2381,
@@ -102,7 +102,7 @@ func NewEtcdReadynessProbe(path string, isSecure bool) *v1.Probe {
 	return &v1.Probe{
 		ProbeHandler: v1.ProbeHandler{
 			HTTPGet: &v1.HTTPGetAction{
-				Path: fmt.Sprintf("%s", path),
+				Path: path,
 				Port: intstr.IntOrString{
 					Type:   intstr.Int,
 					IntVal: 2381,

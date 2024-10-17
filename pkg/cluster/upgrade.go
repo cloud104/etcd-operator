@@ -25,7 +25,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"strings"
-	"time"
 )
 
 func (c *Cluster) upgradeOneMember(memberName string) error {
@@ -51,13 +50,14 @@ func (c *Cluster) upgradeOneMember(memberName string) error {
 		stringPodEtcdVersion := strings.Split(oldpod.Spec.Containers[0].Image, ":v")[1] //"quay.io/coreos/etcd" "3.5.15"
 		podVersion, err := semver.NewVersion(stringPodEtcdVersion)
 		if err != nil {
-			// Handle version not being parsable.
+			return fmt.Errorf("parsing pod version: %v", err)
 		}
 		c.logger.Infof("podImage: %v ", podVersion)
 		c.logger.Infof("pod running etcd version: %v", podVersion)
 		if podVersion.Equal(semver.MustParse("3.5.7")) {
 			err = c.rolloutOneMember(memberName, pod.Namespace)
 			if err != nil {
+				c.logger.Errorf("failed to rolloutOneMember: %v", err)
 			}
 		}
 		c.logger.Infof("STATUS is: %v", c.cluster.Status.Members.Ready)
@@ -81,18 +81,20 @@ func (c *Cluster) upgradeOneMember(memberName string) error {
 		stringPodEtcdVersion := strings.Split(oldpod.Spec.Containers[0].Image, ":v")[1] //"quay.io/coreos/etcd" "3.5.15
 		podVersion, err := semver.NewVersion(stringPodEtcdVersion)
 		if err != nil {
-			// Handle version not being parsable.
+			return fmt.Errorf("parsing pod version: %v", err)
 		}
 		c.logger.Infof("podImage: %v ", podVersion)
 		c.logger.Infof("pod running etcd version: %v", podVersion)
 		if podVersion.Equal(semver.MustParse("3.5.6")) {
 			err = c.rolloutOneMember(memberName, pod.Namespace)
 			if err != nil {
+				c.logger.Errorf("failed to rolloutOneMember: %v", err)
 			}
 		}
 		if podVersion.Equal(semver.MustParse("3.5.12")) {
 			err = c.rolloutOneMember(memberName, pod.Namespace)
 			if err != nil {
+				c.logger.Errorf("failed to rolloutOneMember: %v", err)
 			}
 		}
 		c.logger.Infof("STATUS is: %v", c.cluster.Status.Members.Ready)
@@ -116,13 +118,15 @@ func (c *Cluster) upgradeOneMember(memberName string) error {
 		stringPodEtcdVersion := strings.Split(oldpod.Spec.Containers[0].Image, ":v")[1] //"quay.io/coreos/etcd" "3.5.15
 		podVersion, err := semver.NewVersion(stringPodEtcdVersion)
 		if err != nil {
-			// Handle version not being parsable.
+			return fmt.Errorf("parsing pod version: %v", err)
 		}
 		c.logger.Infof("podImage: %v ", podVersion)
 		c.logger.Infof("pod running etcd version: %v", podVersion)
 		if podVersion.Equal(semver.MustParse("3.5.11")) {
 			err = c.rolloutOneMember(memberName, pod.Namespace)
-
+			if err != nil {
+				c.logger.Errorf("failed to rolloutOneMember: %v", err)
+			}
 		}
 		c.logger.Infof("STATUS is: %v", c.cluster.Status.Members.Ready)
 		k8sutil.SetEtcdVersion(pod, c.cluster.Spec.Version)
@@ -146,10 +150,16 @@ func (c *Cluster) upgradeOneMember(memberName string) error {
 
 func (c *Cluster) rolloutOneMember(memberName, namespace string) error {
 	c.logger.Infof("create a new member")
-	c.addOneMember()
-	time.Sleep(60 * time.Second)
+	err := c.addOneMember()
+	if err != nil {
+		c.logger.Warningf("unable add a new member")
+		return err
+	}
+	//time.Sleep(60 * time.Second)
 	listmembers, err := etcdutil.ListMembers(c.members.ClientURLs(), c.tlsConfig)
 	if err != nil {
+		c.logger.Warningf("unable list members")
+		return err
 	}
 	var memberID uint64
 	memberID = 0
@@ -159,10 +169,14 @@ func (c *Cluster) rolloutOneMember(memberName, namespace string) error {
 		}
 	}
 	// excluir o pod
-	c.removeMember(&etcdutil.Member{
+	err = c.removeMember(&etcdutil.Member{
 		Name:      memberName,
 		Namespace: namespace,
 		ID:        memberID},
 	)
+	if err != nil {
+		c.logger.Warningf("unable remove members")
+		return err
+	}
 	return nil
 }
