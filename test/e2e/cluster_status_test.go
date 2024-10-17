@@ -19,9 +19,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/coreos/etcd-operator/pkg/util/retryutil"
-	"github.com/coreos/etcd-operator/test/e2e/e2eutil"
-	"github.com/coreos/etcd-operator/test/e2e/framework"
+	"github.com/cloud104/etcd-operator/pkg/util/retryutil"
+	"github.com/cloud104/etcd-operator/test/e2e/e2eutil"
+	"github.com/cloud104/etcd-operator/test/e2e/framework"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )

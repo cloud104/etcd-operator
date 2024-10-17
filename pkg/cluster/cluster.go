@@ -24,11 +24,11 @@ import (
 	"strings"
 	"time"
 
-	api "github.com/coreos/etcd-operator/pkg/apis/etcd/v1beta2"
-	"github.com/coreos/etcd-operator/pkg/generated/clientset/versioned"
-	"github.com/coreos/etcd-operator/pkg/util/etcdutil"
-	"github.com/coreos/etcd-operator/pkg/util/k8sutil"
-	"github.com/coreos/etcd-operator/pkg/util/retryutil"
+	api "github.com/cloud104/etcd-operator/pkg/apis/etcd/v1beta2"
+	"github.com/cloud104/etcd-operator/pkg/generated/clientset/versioned"
+	"github.com/cloud104/etcd-operator/pkg/util/etcdutil"
+	"github.com/cloud104/etcd-operator/pkg/util/k8sutil"
+	"github.com/cloud104/etcd-operator/pkg/util/retryutil"
 
 	"github.com/pborman/uuid"
 	"github.com/sirupsen/logrus"

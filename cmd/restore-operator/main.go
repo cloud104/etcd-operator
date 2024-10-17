@@ -22,10 +22,10 @@ import (
 	"runtime"
 	"time"
 
-	controller "github.com/coreos/etcd-operator/pkg/controller/restore-operator"
-	"github.com/coreos/etcd-operator/pkg/util/constants"
-	"github.com/coreos/etcd-operator/pkg/util/k8sutil"
-	version "github.com/coreos/etcd-operator/version"
+	controller "github.com/cloud104/etcd-operator/pkg/controller/restore-operator"
+	"github.com/cloud104/etcd-operator/pkg/util/constants"
+	"github.com/cloud104/etcd-operator/pkg/util/k8sutil"
+	version "github.com/cloud104/etcd-operator/version"
 
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
@@ -77,7 +77,7 @@ func main() {
 	}
 
 	rl, err := resourcelock.New(
-		resourcelock.EndpointsLeasesResourceLock,
+		resourcelock.LeasesResourceLock,
 		namespace,
 		"etcd-restore-operator",
 		kubecli.CoreV1(),

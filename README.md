@@ -95,7 +95,7 @@ metadata:
   name: "example-etcd-cluster"
 spec:
   size: 5
-  version: "3.2.13"
+  version: "3.5.15"
 ```
 
 Apply the size change to the cluster CR:
@@ -123,7 +123,7 @@ metadata:
   name: "example-etcd-cluster"
 spec:
   size: 3
-  version: "3.2.13"
+  version: "3.5.15"
 ```
 ```
 $ kubectl apply -f example/example-etcd-cluster.yaml
@@ -248,7 +248,7 @@ metadata:
   name: "example-etcd-cluster"
 spec:
   size: 3
-  version: "3.2.13"
+  version: "3.5.15"
 ```
 
 Apply the version change to the cluster CR:
@@ -257,11 +257,11 @@ Apply the version change to the cluster CR:
 $ kubectl apply -f upgrade-example
 ```
 
-Wait ~30 seconds. The container image version should be updated to v3.2.13:
+Wait ~30 seconds. The container image version should be updated to v3.5.15:
 
 ```
 $ kubectl get pod example-etcd-cluster-795649v9kq -o yaml | grep "image:" | uniq
-    image: gcr.io/etcd-development/etcd:v3.2.13
+    image: gcr.io/etcd-development/etcd:v3.5.15
 ```
 
 Check the other two pods and you should see the same result.

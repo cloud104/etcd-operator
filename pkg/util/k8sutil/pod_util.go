@@ -17,10 +17,10 @@ package k8sutil
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/cloud104/etcd-operator/pkg/util/etcdutil"
+	"k8s.io/apimachinery/pkg/util/intstr"
 
-	api "github.com/coreos/etcd-operator/pkg/apis/etcd/v1beta2"
-	"github.com/coreos/etcd-operator/pkg/util/etcdutil"
-
+	api "github.com/cloud104/etcd-operator/pkg/apis/etcd/v1beta2"
 	"k8s.io/api/core/v1"
 )
 
@@ -50,6 +50,12 @@ func etcdContainer(cmd []string, repo, version string) v1.Container {
 				ContainerPort: int32(EtcdClientPort),
 				Protocol:      v1.ProtocolTCP,
 			},
+
+			{
+				Name:          "metrics",
+				ContainerPort: int32(2381),
+				Protocol:      v1.ProtocolTCP,
+			},
 		},
 		VolumeMounts: etcdVolumeMounts(),
 	}
@@ -57,9 +63,14 @@ func etcdContainer(cmd []string, repo, version string) v1.Container {
 	return c
 }
 
-func containerWithProbes(c v1.Container, lp *v1.Probe, rp *v1.Probe) v1.Container {
+func containerWithProbes(c v1.Container, lp *v1.Probe, rp *v1.Probe, st *v1.Probe) v1.Container {
 	c.LivenessProbe = lp
-	c.ReadinessProbe = rp
+	if rp != nil {
+		c.ReadinessProbe = rp
+	}
+	if st != nil {
+		c.StartupProbe = st
+	}
 	return c
 }
 
@@ -68,7 +79,46 @@ func containerWithRequirements(c v1.Container, r v1.ResourceRequirements) v1.Con
 	return c
 }
 
-func newEtcdProbe(isSecure bool) *v1.Probe {
+func NewEtcdLivessProbe(path string, isSecure bool) *v1.Probe {
+	return &v1.Probe{
+		ProbeHandler: v1.ProbeHandler{
+			HTTPGet: &v1.HTTPGetAction{
+				Path: path,
+				Port: intstr.IntOrString{
+					Type:   intstr.Int,
+					IntVal: 2381,
+				},
+				Scheme:      "HTTP",
+				HTTPHeaders: nil,
+			},
+		},
+		InitialDelaySeconds: 10,
+		TimeoutSeconds:      10,
+		PeriodSeconds:       60,
+		FailureThreshold:    3,
+	}
+}
+func NewEtcdReadynessProbe(path string, isSecure bool) *v1.Probe {
+	return &v1.Probe{
+		ProbeHandler: v1.ProbeHandler{
+			HTTPGet: &v1.HTTPGetAction{
+				Path: path,
+				Port: intstr.IntOrString{
+					Type:   intstr.Int,
+					IntVal: 2381,
+				},
+				Scheme:      "HTTP",
+				HTTPHeaders: nil,
+			},
+		},
+		InitialDelaySeconds: 1,
+		TimeoutSeconds:      5,
+		PeriodSeconds:       5,
+		FailureThreshold:    3,
+	}
+}
+
+func NewEtcdProbe(isSecure bool) *v1.Probe {
 	// etcd pod is healthy only if it can participate in consensus
 	cmd := "ETCDCTL_API=3 etcdctl endpoint status"
 	if isSecure {

@@ -16,7 +16,7 @@ package k8sutil
 
 import (
 	"context"
-	"github.com/coreos/etcd-operator/pkg/util/etcdutil"
+	"github.com/cloud104/etcd-operator/pkg/util/etcdutil"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"

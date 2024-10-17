@@ -5,7 +5,7 @@ set -o pipefail
 
 KUBECONFIG=${KUBECONFIG:-"/kubeconfig"}
 
-export OPERATOR_IMAGE="quay.io/coreos/etcd-operator:dev"
+export OPERATOR_IMAGE="quay.io/cloud104/etcd-operator:dev"
 
 # Create test namespace
 export TEST_NAMESPACE=$(cat <<EOF | kubectl create -f - | awk '{print $2}' | tr -d '"'

@@ -23,14 +23,14 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/coreos/etcd-operator/pkg/chaos"
-	"github.com/coreos/etcd-operator/pkg/client"
-	"github.com/coreos/etcd-operator/pkg/controller"
-	"github.com/coreos/etcd-operator/pkg/util/constants"
-	"github.com/coreos/etcd-operator/pkg/util/k8sutil"
-	"github.com/coreos/etcd-operator/pkg/util/probe"
-	"github.com/coreos/etcd-operator/pkg/util/retryutil"
-	"github.com/coreos/etcd-operator/version"
+	"github.com/cloud104/etcd-operator/pkg/chaos"
+	"github.com/cloud104/etcd-operator/pkg/client"
+	"github.com/cloud104/etcd-operator/pkg/controller"
+	"github.com/cloud104/etcd-operator/pkg/util/constants"
+	"github.com/cloud104/etcd-operator/pkg/util/k8sutil"
+	"github.com/cloud104/etcd-operator/pkg/util/probe"
+	"github.com/cloud104/etcd-operator/pkg/util/retryutil"
+	"github.com/cloud104/etcd-operator/version"
 	//"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
@@ -101,7 +101,7 @@ func main() {
 	http.Handle("/metrics", promhttp.Handler())
 	go http.ListenAndServe(listenAddr, nil)
 
-	rl, err := resourcelock.New(resourcelock.EndpointsLeasesResourceLock,
+	rl, err := resourcelock.New(resourcelock.LeasesResourceLock,
 		namespace,
 		"etcd-operator",
 		kubecli.CoreV1(),

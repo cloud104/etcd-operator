@@ -21,9 +21,9 @@ import (
 	"sort"
 	"time"
 
-	"github.com/coreos/etcd-operator/pkg/backup/util"
-	"github.com/coreos/etcd-operator/pkg/backup/writer"
-	"github.com/coreos/etcd-operator/pkg/util/constants"
+	"github.com/cloud104/etcd-operator/pkg/backup/util"
+	"github.com/cloud104/etcd-operator/pkg/backup/writer"
+	"github.com/cloud104/etcd-operator/pkg/util/constants"
 
 	"github.com/sirupsen/logrus"
 	clientv3 "go.etcd.io/etcd/client/v3"
