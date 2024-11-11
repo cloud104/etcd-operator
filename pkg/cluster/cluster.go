@@ -137,11 +137,11 @@ func (c *Cluster) setup() error {
 	if c.isSecureClient() {
 		d, err := k8sutil.GetTLSDataFromSecret(c.config.KubeCli, c.cluster.Namespace, c.cluster.Spec.TLS.Static.OperatorSecret)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to get TLS data from secret: %w", err)
 		}
 		c.tlsConfig, err = etcdutil.NewTLSConfig(d.CertData, d.KeyData, d.CAData)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to create TLS config: %w", err)
 		}
 	}
 
@@ -155,7 +155,7 @@ func (c *Cluster) create() error {
 	c.status.SetPhase(api.ClusterPhaseCreating)
 
 	if err := c.updateCRStatus(); err != nil {
-		return fmt.Errorf("cluster create: failed to update cluster phase (%v): %v", api.ClusterPhaseCreating, err)
+		return fmt.Errorf("cluster create: failed to update cluster phase (%v): %w", api.ClusterPhaseCreating, err)
 	}
 	c.logClusterCreation()
 
@@ -322,7 +322,7 @@ func (c *Cluster) startSeedMember() error {
 	}
 	ms := etcdutil.NewMemberSet(m)
 	if err := c.createPod(ms, m, "new"); err != nil {
-		return fmt.Errorf("failed to create seed member (%s): %v", m.Name, err)
+		return fmt.Errorf("failed to create seed member (%s): %w", m.Name, err)
 	}
 	c.members = ms
 	c.logger.Infof("cluster created with seed member (%s)", m.Name)
@@ -357,7 +357,7 @@ func (c *Cluster) Update(cl *api.EtcdCluster) {
 func (c *Cluster) setupServices() error {
 	err := k8sutil.CreateClientService(c.config.KubeCli, c.cluster.Name, c.cluster.Namespace, c.cluster.AsOwner())
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create client service: %w", err)
 	}
 
 	return k8sutil.CreatePeerService(c.config.KubeCli, c.cluster.Name, c.cluster.Namespace, c.cluster.AsOwner())
@@ -376,7 +376,7 @@ func (c *Cluster) createPod(members etcdutil.MemberSet, m *etcdutil.Member, stat
 		pvc := k8sutil.NewEtcdPodPVC(m, *c.cluster.Spec.Pod.PersistentVolumeClaimSpec, c.cluster.Name, c.cluster.Namespace, c.cluster.AsOwner())
 		_, err := c.config.KubeCli.CoreV1().PersistentVolumeClaims(c.cluster.Namespace).Create(context.Background(), pvc, metav1.CreateOptions{})
 		if err != nil {
-			return fmt.Errorf("failed to create PVC for member (%s): %v", m.Name, err)
+			return fmt.Errorf("failed to create PVC for member (%s): %w", m.Name, err)
 		}
 		k8sutil.AddEtcdVolumeToPod(pod, pvc)
 	} else {
@@ -401,7 +401,7 @@ func (c *Cluster) removePod(name string) error {
 func (c *Cluster) pollPods() (running, pending []*v1.Pod, err error) {
 	podList, err := c.config.KubeCli.CoreV1().Pods(c.cluster.Namespace).List(context.Background(), k8sutil.ClusterListOpt(c.cluster.Name))
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to list running pods: %v", err)
+		return nil, nil, fmt.Errorf("failed to list running pods: %w", err)
 	}
 
 	for i := range podList.Items {
@@ -455,7 +455,7 @@ func (c *Cluster) updateCRStatus() error {
 	newCluster.Status = c.status
 	newCluster, err := c.config.EtcdCRCli.EtcdV1beta2().EtcdClusters(c.cluster.Namespace).Update(context.Background(), c.cluster, metav1.UpdateOptions{})
 	if err != nil {
-		return fmt.Errorf("failed to update CR status: %v", err)
+		return fmt.Errorf("failed to update CR status: %w", err)
 	}
 
 	c.cluster = newCluster
