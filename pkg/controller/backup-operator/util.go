@@ -30,11 +30,11 @@ func generateTLSConfig(kubecli kubernetes.Interface, clientTLSSecret, namespace 
 	if len(clientTLSSecret) != 0 {
 		d, err := k8sutil.GetTLSDataFromSecret(kubecli, namespace, clientTLSSecret)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get TLS data from secret (%v): %v", clientTLSSecret, err)
+			return nil, fmt.Errorf("failed to get TLS data from secret (%v): %w", clientTLSSecret, err)
 		}
 		tlsConfig, err = etcdutil.NewTLSConfig(d.CertData, d.KeyData, d.CAData)
 		if err != nil {
-			return nil, fmt.Errorf("failed to constructs tls config: %v", err)
+			return nil, fmt.Errorf("failed to constructs tls config: %w", err)
 		}
 	}
 	return tlsConfig, nil
