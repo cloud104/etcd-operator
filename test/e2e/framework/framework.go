@@ -16,11 +16,9 @@ package framework
 
 import (
 	"bytes"
+	"context"
 	"flag"
 	"fmt"
-	"os/exec"
-	"time"
-
 	"github.com/cloud104/etcd-operator/pkg/client"
 	"github.com/cloud104/etcd-operator/pkg/generated/clientset/versioned"
 	"github.com/cloud104/etcd-operator/pkg/util/constants"
@@ -28,6 +26,8 @@ import (
 	"github.com/cloud104/etcd-operator/pkg/util/probe"
 	"github.com/cloud104/etcd-operator/pkg/util/retryutil"
 	"github.com/cloud104/etcd-operator/test/e2e/e2eutil"
+	"os/exec"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	"k8s.io/api/core/v1"
@@ -86,6 +86,7 @@ func setup() error {
 }
 
 func teardown() error {
+	ctx := context.Background()
 	// Skip the etcd-operator teardown if the operator image was not specified
 	if len(Global.opImage) == 0 {
 		return nil
@@ -95,7 +96,7 @@ func teardown() error {
 	if err != nil {
 		return err
 	}
-	err = Global.KubeClient.CoreV1().Services(Global.Namespace).Delete(etcdRestoreOperatorServiceName, metav1.NewDeleteOptions(1))
+	err = Global.KubeClient.CoreV1().Services(Global.Namespace).Delete(ctx, etcdRestoreOperatorServiceName, *metav1.NewDeleteOptions(1))
 	if err != nil && !apierrors.IsNotFound(err) {
 		return fmt.Errorf("failed to delete etcd restore operator service: %v", err)
 	}
@@ -138,7 +139,7 @@ func (f *Framework) SetupEtcdOperator() error {
 					},
 				},
 				ReadinessProbe: &v1.Probe{
-					Handler: v1.Handler{
+					ProbeHandler: v1.ProbeHandler{
 						HTTPGet: &v1.HTTPGetAction{
 							Path: probe.HTTPReadyzEndpoint,
 							Port: intstr.IntOrString{Type: intstr.Int, IntVal: 8080},
@@ -207,14 +208,15 @@ func (f *Framework) DeleteEtcdOperatorCompletely() error {
 }
 
 func (f *Framework) deleteOperatorCompletely(name string) error {
-	err := f.KubeClient.CoreV1().Pods(f.Namespace).Delete(name, metav1.NewDeleteOptions(1))
+	ctx := context.Background()
+	err := f.KubeClient.CoreV1().Pods(f.Namespace).Delete(ctx, name, *metav1.NewDeleteOptions(1))
 	if err != nil {
 		return err
 	}
 	// Grace period isn't exactly accurate. It took ~10s for operator pod to completely disappear.
 	// We work around by increasing the wait time. Revisit this later.
 	err = retryutil.Retry(5*time.Second, 6, func() (bool, error) {
-		_, err := f.KubeClient.CoreV1().Pods(f.Namespace).Get(name, metav1.GetOptions{})
+		_, err := f.KubeClient.CoreV1().Pods(f.Namespace).Get(ctx, name, metav1.GetOptions{})
 		if err == nil {
 			return false, nil
 		}
@@ -231,6 +233,7 @@ func (f *Framework) deleteOperatorCompletely(name string) error {
 
 // SetupEtcdRestoreOperatorService creates restore operator service that is used by etcd pod to retrieve backup.
 func (f *Framework) SetupEtcdRestoreOperatorService() error {
+	ctx := context.Background()
 	svc := &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: etcdRestoreOperatorServiceName,
@@ -243,7 +246,7 @@ func (f *Framework) SetupEtcdRestoreOperatorService() error {
 			}},
 		},
 	}
-	_, err := f.KubeClient.CoreV1().Services(f.Namespace).Create(svc)
+	_, err := f.KubeClient.CoreV1().Services(f.Namespace).Create(ctx, svc, metav1.CreateOptions{})
 	if err != nil {
 		return fmt.Errorf("create restore-operator service failed: %v", err)
 	}

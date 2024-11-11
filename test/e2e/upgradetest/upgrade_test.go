@@ -15,12 +15,12 @@
 package upgradetest
 
 import (
+	"context"
 	"fmt"
-	"math/rand"
-	"testing"
-
 	api "github.com/cloud104/etcd-operator/pkg/apis/etcd/v1beta2"
 	"github.com/cloud104/etcd-operator/test/e2e/e2eutil"
+	"math/rand"
+	"testing"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -31,6 +31,7 @@ func newOperatorName() string {
 }
 
 func TestResize(t *testing.T) {
+	ctx := context.Background()
 	name := newOperatorName()
 	err := testF.CreateOperator(name)
 	if err != nil {
@@ -64,7 +65,7 @@ func TestResize(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	testClus, err = testF.CRClient.EtcdV1beta2().EtcdClusters(testF.KubeNS).Get(testClus.Name, metav1.GetOptions{})
+	testClus, err = testF.CRClient.EtcdV1beta2().EtcdClusters(testF.KubeNS).Get(ctx, testClus.Name, metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err)
 	}

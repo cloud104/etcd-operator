@@ -30,9 +30,10 @@ import (
 )
 
 func DeleteSecrets(kubecli kubernetes.Interface, namespace string, secretNames ...string) error {
+	ctx := context.Background()
 	var retErr error
 	for _, sname := range secretNames {
-		err := kubecli.CoreV1().Secrets(namespace).Delete(sname, metav1.NewDeleteOptions(0))
+		err := kubecli.CoreV1().Secrets(namespace).Delete(ctx, sname, *metav1.NewDeleteOptions(0))
 		if err != nil {
 			retErr = fmt.Errorf("failed to delete secret (%s): %v; %v", sname, err, retErr)
 		}
@@ -41,8 +42,9 @@ func DeleteSecrets(kubecli kubernetes.Interface, namespace string, secretNames .
 }
 
 func KillMembers(kubecli kubernetes.Interface, namespace string, names ...string) error {
+	ctx := context.Background()
 	for _, name := range names {
-		err := kubecli.CoreV1().Pods(namespace).Delete(name, metav1.NewDeleteOptions(0))
+		err := kubecli.CoreV1().Pods(namespace).Delete(ctx, name, *metav1.NewDeleteOptions(0))
 		if err != nil && !k8sutil.IsKubernetesResourceNotFoundError(err) {
 			return err
 		}
