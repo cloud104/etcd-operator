@@ -219,9 +219,9 @@ func CreateAndWaitPod(kubecli kubernetes.Interface, ns string, pod *v1.Pod, time
 
 	if err != nil {
 		if retryutil.IsRetryFailure(err) {
-			return nil, fmt.Errorf("failed to wait pod running, it is still pending: %v", err)
+			return nil, fmt.Errorf("failed to wait pod running, it is still pending: %w", err)
 		}
-		return nil, fmt.Errorf("failed to wait pod running: %v", err)
+		return nil, fmt.Errorf("failed to wait pod running: %w", err)
 	}
 
 	return retPod, nil
@@ -584,9 +584,9 @@ type Operation string
 
 const (
 	OperationAdd     Operation = "add"
-	OperationRemove            = "remove"
-	OperationReplace           = "replace"
-	OperationMove              = "move"
-	OperationCopy              = "copy"
-	OperationTest              = "test"
+	OperationRemove  Operation = "remove"
+	OperationReplace Operation = "replace"
+	OperationMove    Operation = "move"
+	OperationCopy    Operation = "copy"
+	OperationTest    Operation = "test"
 )
