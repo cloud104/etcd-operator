@@ -30,7 +30,7 @@ func (c *Cluster) upgradeOneMember(memberName string) error {
 
 	pod, err := c.config.KubeCli.CoreV1().Pods(ns).Get(context.Background(), memberName, metav1.GetOptions{})
 	if err != nil {
-		return fmt.Errorf("fail to get pod (%s): %v", memberName, err)
+		return fmt.Errorf("fail to get pod (%s): %w", memberName, err)
 	}
 	oldpod := pod.DeepCopy()
 
@@ -40,11 +40,11 @@ func (c *Cluster) upgradeOneMember(memberName string) error {
 	k8sutil.SetEtcdVersion(pod, c.cluster.Spec.Version)
 	patchdata, err := k8sutil.CreatePatch(oldpod, pod, v1.Pod{})
 	if err != nil {
-		return fmt.Errorf("error creating patch: %v", err)
+		return fmt.Errorf("error creating patch: %w", err)
 	}
 	_, err = c.config.KubeCli.CoreV1().Pods(ns).Patch(context.Background(), pod.GetName(), types.StrategicMergePatchType, patchdata, metav1.PatchOptions{})
 	if err != nil {
-		return fmt.Errorf("fail to update the etcd member (%s): %v", memberName, err)
+		return fmt.Errorf("fail to update the etcd member (%s): %w", memberName, err)
 	}
 	c.logger.Infof("finished upgrading the etcd member %v", memberName)
 	_, err = c.eventsCli.Create(context.Background(), k8sutil.MemberUpgradedEvent(memberName, k8sutil.GetEtcdVersion(oldpod), c.cluster.Spec.Version, c.cluster), metav1.CreateOptions{})
