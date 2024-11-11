@@ -84,7 +84,7 @@ func (c *Controller) handleClusterEvent(event *Event) (bool, error) {
 	clus.SetDefaults()
 
 	if err := clus.Spec.Validate(); err != nil {
-		return false, fmt.Errorf("invalid cluster spec. please fix the following problem with the cluster spec: %v", err)
+		return false, fmt.Errorf("invalid cluster spec. please fix the following problem with the cluster spec: %w", err)
 	}
 
 	switch event.Type {

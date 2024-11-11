@@ -31,7 +31,7 @@ func ListMembers(clientURLs []string, tc *tls.Config) (*clientv3.MemberListRespo
 	}
 	etcdcli, err := clientv3.New(cfg)
 	if err != nil {
-		return nil, fmt.Errorf("list members failed: creating etcd client failed: %v", err)
+		return nil, fmt.Errorf("list members failed: creating etcd client failed: %w", err)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), constants.DefaultRequestTimeout)
