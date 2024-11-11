@@ -145,7 +145,7 @@ func (r *Restore) handleErr(err error, key interface{}) {
 func (r *Restore) prepareSeed(er *api.EtcdRestore) (err error) {
 	defer func() {
 		if err != nil {
-			err = fmt.Errorf("prepare seed failed: %v", err)
+			err = fmt.Errorf("prepare seed failed: %w", err)
 		}
 	}()
 
@@ -153,16 +153,16 @@ func (r *Restore) prepareSeed(er *api.EtcdRestore) (err error) {
 	ecRef := er.Spec.EtcdCluster
 	ec, err := r.etcdCRCli.EtcdV1beta2().EtcdClusters(r.namespace).Get(context.Background(), ecRef.Name, metav1.GetOptions{})
 	if err != nil {
-		return fmt.Errorf("failed to get reference EtcdCluster(%s/%s): %v", r.namespace, ecRef.Name, err)
+		return fmt.Errorf("failed to get reference EtcdCluster(%s/%s): %w", r.namespace, ecRef.Name, err)
 	}
 	if err := ec.Spec.Validate(); err != nil {
-		return fmt.Errorf("invalid cluster spec: %v", err)
+		return fmt.Errorf("invalid cluster spec: %w", err)
 	}
 
 	// Delete reference EtcdCluster
 	err = r.etcdCRCli.EtcdV1beta2().EtcdClusters(r.namespace).Delete(context.Background(), ecRef.Name, metav1.DeleteOptions{})
 	if err != nil {
-		return fmt.Errorf("failed to delete reference EtcdCluster (%s/%s): %v", r.namespace, ecRef.Name, err)
+		return fmt.Errorf("failed to delete reference EtcdCluster (%s/%s): %w", r.namespace, ecRef.Name, err)
 	}
 	// Need to delete etcd pods, etc. completely before creating new cluster.
 	err = r.deleteClusterResourcesCompletely(ecRef.Name)
@@ -186,12 +186,12 @@ func (r *Restore) prepareSeed(er *api.EtcdRestore) (err error) {
 	ec.Status.Phase = api.ClusterPhaseRunning
 	ec, err = r.etcdCRCli.EtcdV1beta2().EtcdClusters(r.namespace).Create(context.Background(), ec, metav1.CreateOptions{})
 	if err != nil {
-		return fmt.Errorf("failed to create restored EtcdCluster (%s/%s): %v", r.namespace, clusterName, err)
+		return fmt.Errorf("failed to create restored EtcdCluster (%s/%s): %w", r.namespace, clusterName, err)
 	}
 
 	err = r.createSeedMember(ec, r.mySvcAddr, clusterName, ec.AsOwner())
 	if err != nil {
-		return fmt.Errorf("failed to create seed member for cluster (%s): %v", clusterName, err)
+		return fmt.Errorf("failed to create seed member for cluster (%s): %w", clusterName, err)
 	}
 
 	// Retry updating the etcdcluster CR spec.paused=false. The etcd-operator will update the CR once so there needs to be a single retry in case of conflict
@@ -211,7 +211,7 @@ func (r *Restore) prepareSeed(er *api.EtcdRestore) (err error) {
 		return true, nil
 	})
 	if err != nil {
-		return fmt.Errorf("failed to update etcdcluster CR to spec.paused=false: %v", err)
+		return fmt.Errorf("failed to update etcdcluster CR to spec.paused=false: %w", err)
 	}
 	return nil
 }
@@ -238,12 +238,12 @@ func (r *Restore) deleteClusterResourcesCompletely(clusterName string) error {
 	// Delete etcd pods
 	err := r.kubecli.CoreV1().Pods(r.namespace).Delete(context.Background(), clusterName, *metav1.NewDeleteOptions(0))
 	if err != nil && !k8sutil.IsKubernetesResourceNotFoundError(err) {
-		return fmt.Errorf("failed to delete cluster pods: %v", err)
+		return fmt.Errorf("failed to delete cluster pods: %w", err)
 	}
 
 	err = r.kubecli.CoreV1().Services(r.namespace).Delete(context.Background(), clusterName, *metav1.NewDeleteOptions(0))
 	if err != nil && !k8sutil.IsKubernetesResourceNotFoundError(err) {
-		return fmt.Errorf("failed to delete cluster services: %v", err)
+		return fmt.Errorf("failed to delete cluster services: %w", err)
 	}
 	return nil
 }

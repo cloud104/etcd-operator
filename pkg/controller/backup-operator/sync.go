@@ -188,7 +188,7 @@ func (b *Backup) periodicRunnerFunc(ctx context.Context, t *time.Ticker, eb *api
 					}
 					b.logger.Warningf("[Attempt: %d/%d] Failed to get latest EtcdBackup %v : (%v)",
 						i, retryLimit, eb.Name, err)
-					time.Sleep(1)
+					time.Sleep(1 * time.Second)
 					continue
 				}
 				break

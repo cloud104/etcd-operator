@@ -40,7 +40,7 @@ func NewS3Reader(s3 *s3.S3) Reader {
 func (s3r *s3Reader) Open(path string) (io.ReadCloser, error) {
 	bucket, key, err := util.ParseBucketAndKey(path)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse s3 bucket and key: %v", err)
+		return nil, fmt.Errorf("failed to parse s3 bucket and key: %w", err)
 	}
 	resp, err := s3r.s3.GetObject(&s3.GetObjectInput{
 		Bucket: aws.String(bucket),
