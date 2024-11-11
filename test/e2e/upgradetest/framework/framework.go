@@ -146,7 +146,11 @@ func (f *Framework) DeleteOperator(name string) error {
 	// The deleted operator will not actively release the Endpoints lock causing a non-leader candidate to timeout for the lease duration: 15s
 	// Deleting the Endpoints resource simulates the leader actively releasing the lock so that the next candidate avoids the timeout.
 	// TODO: change this if we change to use another kind of lock, e.g. configmap.
-	return f.KubeCli.CoreV1().Endpoints(f.KubeNS).Delete(ctx, "etcd-operator", *metav1.NewDeleteOptions(0))
+	err = f.KubeCli.CoreV1().Endpoints(f.KubeNS).Delete(ctx, "etcd-operator", *metav1.NewDeleteOptions(0))
+	if err != nil {
+		return fmt.Errorf("failed to delete endpoint 'etcd-operator' in namespace %s: %w", f.KubeNS, err)
+	}
+	return nil
 }
 
 func (f *Framework) UpgradeOperator(name string) error {
