@@ -14,7 +14,7 @@ spec:
         fsGroup: 1000
       containers:
       - name: etcd-operator
-        image: us-east1-docker.pkg.dev/tks-gcr-pub/etcd-operator/etcd-operator:v0.10.2-tks
+        image: us-east1-docker.pkg.dev/tks-gcr-pub/etcd-operator/etcd-operator:v0.10.6-tks
         command:
         - etcd-operator
         # Uncomment to act for resources in all namespaces. More information in doc/user/clusterwide.md
