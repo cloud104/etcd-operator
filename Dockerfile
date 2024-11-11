@@ -1,4 +1,4 @@
-FROM golang:1.23.1-alpine3.20 AS builder
+FROM golang:1.23.3-alpine3.20 AS builder
 
 # Define build arguments
 ARG VERSION=dev
