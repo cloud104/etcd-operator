@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/coreos/etcd-operator/pkg/backup/util"
+	"github.com/cloud104/etcd-operator/pkg/backup/util"
 
 	"github.com/Azure/azure-sdk-for-go/storage"
 )
@@ -40,7 +40,7 @@ func NewABSReader(abs *storage.BlobStorageClient) Reader {
 func (absr *absReader) Open(path string) (io.ReadCloser, error) {
 	container, key, err := util.ParseBucketAndKey(path)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse abs container and key: %v", err)
+		return nil, fmt.Errorf("failed to parse abs container and key: %w", err)
 	}
 
 	containerRef := absr.abs.GetContainerReference(container)

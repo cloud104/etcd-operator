@@ -16,9 +16,9 @@ package controller
 
 import (
 	"context"
-	"github.com/coreos/etcd-operator/pkg/client"
-	"github.com/coreos/etcd-operator/pkg/generated/clientset/versioned"
-	"github.com/coreos/etcd-operator/pkg/util/k8sutil"
+	"github.com/cloud104/etcd-operator/pkg/client"
+	"github.com/cloud104/etcd-operator/pkg/generated/clientset/versioned"
+	"github.com/cloud104/etcd-operator/pkg/util/k8sutil"
 
 	"github.com/sirupsen/logrus"
 	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"

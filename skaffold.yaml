@@ -1,0 +1,24 @@
+apiVersion: skaffold/v4beta11
+kind: Config
+metadata:
+  name: etcd-operator
+build:
+  artifacts:
+    - image: etcd-operator-dev
+      #context: hack/developer/skaffold
+      docker:
+        dockerfile: Dockerfile
+        buildArgs:
+          VERSION: dev
+          COMMIT: none
+          DATE: unknown
+manifests:
+  rawYaml:
+    - example/crd/backup-operator.yaml
+    - example/crd/operator.yaml
+    - example/crd/restore-operator.yaml
+#    - hack/developer/skaffold/rbac/cluster-role-binding-template.yaml
+#    - hack/developer/skaffold/rbac/cluster-role-template.yaml
+#    - hack/developer/skaffold/rbac/role-binding-template.yaml
+#    - hack/developer/skaffold/rbac/role-template.yaml
+    - hack/developer/skaffold/deployment.yaml

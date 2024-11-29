@@ -15,18 +15,20 @@
 package e2e
 
 import (
+	"context"
 	"os"
 	"testing"
 	"time"
 
-	"github.com/coreos/etcd-operator/pkg/util/retryutil"
-	"github.com/coreos/etcd-operator/test/e2e/e2eutil"
-	"github.com/coreos/etcd-operator/test/e2e/framework"
+	"github.com/cloud104/etcd-operator/pkg/util/retryutil"
+	"github.com/cloud104/etcd-operator/test/e2e/e2eutil"
+	"github.com/cloud104/etcd-operator/test/e2e/framework"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestReadyMembersStatus(t *testing.T) {
+	ctx := context.Background()
 	if os.Getenv(envParallelTest) == envParallelTestTrue {
 		t.Parallel()
 	}
@@ -48,7 +50,7 @@ func TestReadyMembersStatus(t *testing.T) {
 	}
 
 	err = retryutil.Retry(5*time.Second, 3, func() (done bool, err error) {
-		currEtcd, err := f.CRClient.EtcdV1beta2().EtcdClusters(f.Namespace).Get(testEtcd.Name, metav1.GetOptions{})
+		currEtcd, err := f.CRClient.EtcdV1beta2().EtcdClusters(f.Namespace).Get(ctx, testEtcd.Name, metav1.GetOptions{})
 		if err != nil {
 			e2eutil.LogfWithTimestamp(t, "failed to get updated cluster object: %v", err)
 			return false, nil

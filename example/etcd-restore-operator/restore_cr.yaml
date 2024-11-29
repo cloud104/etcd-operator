@@ -13,3 +13,17 @@ spec:
     # e.g: "mybucket/etcd.backup"
     path: <full-s3-path>
     awsSecret: <aws-secret>
+---
+apiVersion: "etcd.database.coreos.com/v1beta2"
+kind: "EtcdRestore"
+metadata:
+  # The restore CR name must be the same as spec.etcdCluster.name
+  name: example
+spec:
+  etcdCluster:
+    # The namespace is the same as this EtcdRestore CR
+    name: example
+  backupStorageType: GCS
+  gcs:
+    path: etcd-backup-testes/etcd-backup_v1501_2024-10-18-22:36:40
+    gcpSecret: gcp-credentials

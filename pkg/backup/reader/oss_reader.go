@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/coreos/etcd-operator/pkg/backup/util"
+	"github.com/cloud104/etcd-operator/pkg/backup/util"
 
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 )
@@ -40,7 +40,7 @@ func NewOSSReader(client *oss.Client) Reader {
 func (ossr *ossReader) Open(path string) (io.ReadCloser, error) {
 	bk, key, err := util.ParseBucketAndKey(path)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse oss bucket and key: %v", err)
+		return nil, fmt.Errorf("failed to parse oss bucket and key: %w", err)
 	}
 
 	exist, err := ossr.client.IsBucketExist(bk)

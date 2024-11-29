@@ -17,9 +17,10 @@ package etcdutil
 import (
 	"crypto/tls"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 
-	"github.com/coreos/etcd/pkg/transport"
+	"go.etcd.io/etcd/client/pkg/v3/transport"
 )
 
 const (
@@ -30,7 +31,8 @@ const (
 
 func NewTLSConfig(certData, keyData, caData []byte) (*tls.Config, error) {
 	// TODO: Need cleanup these temp dirs
-	dir, err := ioutil.TempDir("", "etcd-operator-cluster-tls")
+	dir, err := os.MkdirTemp("", "etcd-operator-cluster-tls")
+
 	if err != nil {
 		return nil, err
 	}

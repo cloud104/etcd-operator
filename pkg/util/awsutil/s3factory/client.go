@@ -21,7 +21,7 @@ import (
 	"os"
 	"path"
 
-	api "github.com/coreos/etcd-operator/pkg/apis/etcd/v1beta2"
+	api "github.com/cloud104/etcd-operator/pkg/apis/etcd/v1beta2"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -43,21 +43,21 @@ type S3Client struct {
 func NewClientFromSecret(kubecli kubernetes.Interface, namespace, endpoint, awsSecret string, forcePathStyle bool) (w *S3Client, err error) {
 	defer func() {
 		if err != nil {
-			err = fmt.Errorf("new S3 client failed: %v", err)
+			err = fmt.Errorf("new S3 client failed: %w", err)
 		}
 	}()
 	w = &S3Client{}
 	w.configDir, err = ioutil.TempDir(tmpdir, "")
 	if err != nil {
-		return nil, fmt.Errorf("failed to create aws config dir: (%v)", err)
+		return nil, fmt.Errorf("failed to create aws config dir: (%w)", err)
 	}
 	so, err := setupAWSConfig(kubecli, namespace, awsSecret, endpoint, w.configDir, forcePathStyle)
 	if err != nil {
-		return nil, fmt.Errorf("failed to setup aws config: (%v)", err)
+		return nil, fmt.Errorf("failed to setup aws config: (%w)", err)
 	}
 	sess, err := session.NewSessionWithOptions(*so)
 	if err != nil {
-		return nil, fmt.Errorf("new AWS session failed: %v", err)
+		return nil, fmt.Errorf("new AWS session failed: %w", err)
 	}
 	w.S3 = s3.New(sess)
 	return w, nil
@@ -80,7 +80,7 @@ func setupAWSConfig(kubecli kubernetes.Interface, ns, secret, endpoint, configDi
 
 	se, err := kubecli.CoreV1().Secrets(ns).Get(context.Background(), secret, metav1.GetOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("setup AWS config failed: get k8s secret failed: %v", err)
+		return nil, fmt.Errorf("setup AWS config failed: get k8s secret failed: %w", err)
 	}
 
 	creds := se.Data[api.AWSSecretCredentialsFileName]
@@ -88,7 +88,7 @@ func setupAWSConfig(kubecli kubernetes.Interface, ns, secret, endpoint, configDi
 		credsFile := path.Join(configDir, "credentials")
 		err = ioutil.WriteFile(credsFile, creds, 0600)
 		if err != nil {
-			return nil, fmt.Errorf("setup AWS config failed: write credentials file failed: %v", err)
+			return nil, fmt.Errorf("setup AWS config failed: write credentials file failed: %w", err)
 		}
 		options.SharedConfigFiles = append(options.SharedConfigFiles, credsFile)
 	}
@@ -98,7 +98,7 @@ func setupAWSConfig(kubecli kubernetes.Interface, ns, secret, endpoint, configDi
 		configFile := path.Join(configDir, "config")
 		err = ioutil.WriteFile(configFile, config, 0600)
 		if err != nil {
-			return nil, fmt.Errorf("setup AWS config failed: write config file failed: %v", err)
+			return nil, fmt.Errorf("setup AWS config failed: write config file failed: %w", err)
 		}
 		options.SharedConfigFiles = append(options.SharedConfigFiles, configFile)
 	}

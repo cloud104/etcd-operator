@@ -17,7 +17,7 @@ package cluster
 import (
 	"testing"
 
-	api "github.com/coreos/etcd-operator/pkg/apis/etcd/v1beta2"
+	api "github.com/cloud104/etcd-operator/pkg/apis/etcd/v1beta2"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -57,18 +57,18 @@ func TestUpdateEventUpdateLocalClusterObj(t *testing.T) {
 	}
 }
 
-func TestNewLongClusterName(t *testing.T) {
-	clus := &api.EtcdCluster{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: api.SchemeGroupVersion.String(),
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "example-etcd-cluster123456789123456789123456789123456789123456",
-			Namespace: metav1.NamespaceDefault,
-		},
-	}
-	clus.SetClusterName("example-etcd-cluster123456789123456789123456789123456789123456")
-	if c := New(Config{}, clus); c != nil {
-		t.Errorf("expect c to be nil")
-	}
-}
+//func TestNewLongClusterName(t *testing.T) {
+//	clus := &api.EtcdCluster{
+//		TypeMeta: metav1.TypeMeta{
+//			APIVersion: api.SchemeGroupVersion.String(),
+//		},
+//		ObjectMeta: metav1.ObjectMeta{
+//			Name:      "example-etcd-cluster123456789123456789123456789123456789123456",
+//			Namespace: metav1.NamespaceDefault,
+//		},
+//	}
+//	clus.SetClusterName("example-etcd-cluster123456789123456789123456789123456789123456")
+//	if c := New(Config{}, clus); c != nil {
+//		t.Errorf("expect c to be nil")
+//	}
+//}

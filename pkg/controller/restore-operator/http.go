@@ -21,13 +21,13 @@ import (
 	"io"
 	"net/http"
 
-	api "github.com/coreos/etcd-operator/pkg/apis/etcd/v1beta2"
-	"github.com/coreos/etcd-operator/pkg/backup/backupapi"
-	"github.com/coreos/etcd-operator/pkg/backup/reader"
-	"github.com/coreos/etcd-operator/pkg/util/alibabacloudutil/ossfactory"
-	"github.com/coreos/etcd-operator/pkg/util/awsutil/s3factory"
-	"github.com/coreos/etcd-operator/pkg/util/azureutil/absfactory"
-	"github.com/coreos/etcd-operator/pkg/util/gcputil/gcsfactory"
+	api "github.com/cloud104/etcd-operator/pkg/apis/etcd/v1beta2"
+	"github.com/cloud104/etcd-operator/pkg/backup/backupapi"
+	"github.com/cloud104/etcd-operator/pkg/backup/reader"
+	"github.com/cloud104/etcd-operator/pkg/util/alibabacloudutil/ossfactory"
+	"github.com/cloud104/etcd-operator/pkg/util/awsutil/s3factory"
+	"github.com/cloud104/etcd-operator/pkg/util/azureutil/absfactory"
+	"github.com/cloud104/etcd-operator/pkg/util/gcputil/gcsfactory"
 
 	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -69,7 +69,7 @@ func (r *Restore) serveBackup(w http.ResponseWriter, req *http.Request) error {
 	}
 	v, exists, err := r.indexer.Get(obj)
 	if err != nil {
-		return fmt.Errorf("failed to get restore CR for restore-name (%v): %v", restoreName, err)
+		return fmt.Errorf("failed to get restore CR for restore-name (%v): %w", restoreName, err)
 	}
 	if !exists {
 		return fmt.Errorf("no restore CR found for restore-name (%v)", restoreName)
@@ -96,7 +96,7 @@ func (r *Restore) serveBackup(w http.ResponseWriter, req *http.Request) error {
 
 		s3Cli, err := s3factory.NewClientFromSecret(r.kubecli, r.namespace, s3RestoreSource.Endpoint, s3RestoreSource.AWSSecret, s3RestoreSource.ForcePathStyle)
 		if err != nil {
-			return fmt.Errorf("failed to create S3 client: %v", err)
+			return fmt.Errorf("failed to create S3 client: %w", err)
 		}
 		defer s3Cli.Close()
 
@@ -114,7 +114,7 @@ func (r *Restore) serveBackup(w http.ResponseWriter, req *http.Request) error {
 
 		absCli, err := absfactory.NewClientFromSecret(r.kubecli, r.namespace, absRestoreSource.ABSSecret)
 		if err != nil {
-			return fmt.Errorf("failed to create ABS client: %v", err)
+			return fmt.Errorf("failed to create ABS client: %w", err)
 		}
 		// Nothing to Close for absCli yet
 
@@ -133,7 +133,7 @@ func (r *Restore) serveBackup(w http.ResponseWriter, req *http.Request) error {
 
 		gcsCli, err := gcsfactory.NewClientFromSecret(ctx, r.kubecli, r.namespace, gcsRestoreSource.GCPSecret)
 		if err != nil {
-			return fmt.Errorf("failed to create GCS client: %v", err)
+			return fmt.Errorf("failed to create GCS client: %w", err)
 		}
 		defer gcsCli.GCS.Close()
 
@@ -151,7 +151,7 @@ func (r *Restore) serveBackup(w http.ResponseWriter, req *http.Request) error {
 
 		ossCli, err := ossfactory.NewClientFromSecret(r.kubecli, r.namespace, ossRestoreSource.Endpoint, ossRestoreSource.OSSSecret)
 		if err != nil {
-			return fmt.Errorf("failed to create OSS client: %v", err)
+			return fmt.Errorf("failed to create OSS client: %w", err)
 		}
 
 		backupReader = reader.NewOSSReader(ossCli.OSS)
@@ -162,13 +162,13 @@ func (r *Restore) serveBackup(w http.ResponseWriter, req *http.Request) error {
 
 	rc, err := backupReader.Open(path)
 	if err != nil {
-		return fmt.Errorf("failed to read backup file(%v): %v", path, err)
+		return fmt.Errorf("failed to read backup file(%v): %w", path, err)
 	}
 	defer rc.Close()
 
 	_, err = io.Copy(w, rc)
 	if err != nil {
-		return fmt.Errorf("failed to write backup to %s: %v", req.RemoteAddr, err)
+		return fmt.Errorf("failed to write backup to %s: %w", req.RemoteAddr, err)
 	}
 	return nil
 }

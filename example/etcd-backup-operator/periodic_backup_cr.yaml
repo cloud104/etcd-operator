@@ -1,16 +1,35 @@
+# https://github.com/coreos/etcd-operator/blob/master/doc/user/gcs_backup.md
+#apiVersion: "etcd.database.coreos.com/v1beta2"
+#kind: "EtcdBackup"
+#metadata:
+#  name: example-etcd-cluster-periodic-backup
+#spec:
+#  etcdEndpoints: [<etcd-cluster-endpoints>]
+#  storageType: S3
+#  backupPolicy:
+#    # 0 > enable periodic backup
+#    backupIntervalInSecond: 125
+#    maxBackups: 4
+#  s3:
+#    # The format of "path" must be: "<s3-bucket-name>/<path-to-backup-file>"
+#    # e.g: "mybucket/etcd.backup"
+#    path: <full-s3-path>
+#    awsSecret: <aws-secret>
+#---
 apiVersion: "etcd.database.coreos.com/v1beta2"
 kind: "EtcdBackup"
 metadata:
-  name: example-etcd-cluster-periodic-backup
+  name: etcd-operator-cluster-periodic-backup
 spec:
-  etcdEndpoints: [<etcd-cluster-endpoints>]
-  storageType: S3
+  clientTLSSecret: etcd-client-tls
+  etcdEndpoints:
+    - example-client.default.svc:2379
   backupPolicy:
     # 0 > enable periodic backup
-    backupIntervalInSecond: 125
-    maxBackups: 4
-  s3:
-    # The format of "path" must be: "<s3-bucket-name>/<path-to-backup-file>"
-    # e.g: "mybucket/etcd.backup"
-    path: <full-s3-path>
-    awsSecret: <aws-secret>
+    backupIntervalInSecond: 60
+    maxBackups: 6
+    timeoutInSecond: 59
+  storageType: GCS
+  gcs:
+    path: etcd-backup-testes/etcd-backup
+    gcpSecret: gcp-credentials
