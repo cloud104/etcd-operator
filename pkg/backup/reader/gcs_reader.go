@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/coreos/etcd-operator/pkg/backup/util"
+	"github.com/cloud104/etcd-operator/pkg/backup/util"
 
 	"cloud.google.com/go/storage"
 )
@@ -42,7 +42,7 @@ func NewGCSReader(ctx context.Context, gcs *storage.Client) Reader {
 func (gcsr *gcsReader) Open(path string) (io.ReadCloser, error) {
 	bucket, key, err := util.ParseBucketAndKey(path)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse gcs bucket and key: %v", err)
+		return nil, fmt.Errorf("failed to parse gcs bucket and key: %w", err)
 	}
 
 	return gcsr.gcs.Bucket(bucket).Object(key).NewReader(gcsr.ctx)

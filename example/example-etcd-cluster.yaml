@@ -8,4 +8,5 @@ metadata:
   #   etcd.database.coreos.com/scope: clusterwide
 spec:
   size: 3
-  version: "3.2.13"
+  version: "3.5.6"
+  repository: "us-east1-docker.pkg.dev/tks-gcr-pub/etcd-operator/etcd"

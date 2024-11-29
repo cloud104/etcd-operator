@@ -1,0 +1,38 @@
+# three node (two workers) cluster config
+# kind-config-taints.yaml
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+  - role: control-plane
+  - role: worker
+    # Adiciona o taint 'etcd-size=medium:NoSchedule'
+    kubeadmConfigPatches:
+      - |
+        kind: JoinConfiguration
+        nodeRegistration:
+          taints:
+          - key: "etcd-size"
+            value: "medium"
+            effect: "NoSchedule"
+          kubeletExtraArgs:
+            node-labels: "node-pool=etcd-size-medium"
+  - role: worker
+    # Adiciona o taint 'etcd-size=large:NoSchedule'
+    kubeadmConfigPatches:
+      - |
+        kind: JoinConfiguration
+        nodeRegistration:
+          taints:
+          - key: "etcd-size"
+            value: "large"
+            effect: "NoSchedule"    
+          kubeletExtraArgs:
+            node-labels: "node-pool=etcd-size-large"
+  - role: worker
+    # Adiciona o taint 'etcd-size=large:NoSchedule'
+    kubeadmConfigPatches:
+      - |
+        kind: JoinConfiguration
+        nodeRegistration: 
+          kubeletExtraArgs:
+            node-labels: "node-pool=worker-apps"

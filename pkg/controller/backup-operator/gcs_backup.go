@@ -19,10 +19,10 @@ import (
 	"crypto/tls"
 	"fmt"
 
-	api "github.com/coreos/etcd-operator/pkg/apis/etcd/v1beta2"
-	"github.com/coreos/etcd-operator/pkg/backup"
-	"github.com/coreos/etcd-operator/pkg/backup/writer"
-	"github.com/coreos/etcd-operator/pkg/util/gcputil/gcsfactory"
+	api "github.com/cloud104/etcd-operator/pkg/apis/etcd/v1beta2"
+	"github.com/cloud104/etcd-operator/pkg/backup"
+	"github.com/cloud104/etcd-operator/pkg/backup/writer"
+	"github.com/cloud104/etcd-operator/pkg/util/gcputil/gcsfactory"
 
 	"k8s.io/client-go/kubernetes"
 )
@@ -45,12 +45,12 @@ func handleGCS(ctx context.Context, kubecli kubernetes.Interface, s *api.GCSBack
 
 	rev, etcdVersion, now, err := bm.SaveSnap(ctx, s.Path, isPeriodic)
 	if err != nil {
-		return nil, fmt.Errorf("failed to save snapshot (%v)", err)
+		return nil, fmt.Errorf("failed to save snapshot (%w)", err)
 	}
 	if maxBackup > 0 {
 		err := bm.EnsureMaxBackup(ctx, s.Path, maxBackup)
 		if err != nil {
-			return nil, fmt.Errorf("succeeded in saving snapshot but failed to delete old snapshot (%v)", err)
+			return nil, fmt.Errorf("succeeded in saving snapshot but failed to delete old snapshot (%w)", err)
 		}
 	}
 	return &api.BackupStatus{EtcdVersion: etcdVersion, EtcdRevision: rev, LastSuccessDate: *now}, nil

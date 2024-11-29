@@ -4,6 +4,9 @@ metadata:
   name: etcd-backup-operator
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      name: etcd-backup-operator
   template:
     metadata:
       labels:
@@ -11,7 +14,7 @@ spec:
     spec:
       containers:
       - name: etcd-backup-operator
-        image: us-east1-docker.pkg.dev/tks-gcr-pub/etcd-operator/etcd-operator:v0.10.2-tks
+        image: us-east1-docker.pkg.dev/tks-gcr-pub/etcd-operator/etcd-operator:v0.10.5-RC-tks
         command:
         - etcd-backup-operator
         env:

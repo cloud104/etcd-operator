@@ -20,8 +20,8 @@ import (
 	"reflect"
 	"time"
 
-	api "github.com/coreos/etcd-operator/pkg/apis/etcd/v1beta2"
-	"github.com/coreos/etcd-operator/pkg/util/constants"
+	api "github.com/cloud104/etcd-operator/pkg/apis/etcd/v1beta2"
+	"github.com/cloud104/etcd-operator/pkg/util/constants"
 
 	"github.com/sirupsen/logrus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -188,7 +188,7 @@ func (b *Backup) periodicRunnerFunc(ctx context.Context, t *time.Ticker, eb *api
 					}
 					b.logger.Warningf("[Attempt: %d/%d] Failed to get latest EtcdBackup %v : (%v)",
 						i, retryLimit, eb.Name, err)
-					time.Sleep(1)
+					time.Sleep(1 * time.Second)
 					continue
 				}
 				break

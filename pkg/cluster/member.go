@@ -18,8 +18,8 @@ import (
 	"fmt"
 	"go.etcd.io/etcd/api/v3/etcdserverpb"
 
-	"github.com/coreos/etcd-operator/pkg/util/etcdutil"
-	"github.com/coreos/etcd-operator/pkg/util/k8sutil"
+	"github.com/cloud104/etcd-operator/pkg/util/etcdutil"
+	"github.com/cloud104/etcd-operator/pkg/util/k8sutil"
 	"github.com/pkg/errors"
 
 	"k8s.io/api/core/v1"

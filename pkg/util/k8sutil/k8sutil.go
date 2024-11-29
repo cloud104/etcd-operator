@@ -18,17 +18,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/Masterminds/semver/v3"
+	"github.com/sirupsen/logrus"
 	"net"
 	"net/url"
 	"os"
 	"strings"
 	"time"
 
-	api "github.com/coreos/etcd-operator/pkg/apis/etcd/v1beta2"
-	"github.com/coreos/etcd-operator/pkg/util/etcdutil"
-	"github.com/coreos/etcd-operator/pkg/util/retryutil"
+	api "github.com/cloud104/etcd-operator/pkg/apis/etcd/v1beta2"
+	"github.com/cloud104/etcd-operator/pkg/util/etcdutil"
+	"github.com/cloud104/etcd-operator/pkg/util/retryutil"
 	"github.com/pborman/uuid"
-
 	appsv1beta1 "k8s.io/api/apps/v1beta1"
 	"k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -71,7 +72,9 @@ const (
 
 	// defaultDNSTimeout is the default maximum allowed time for the init container of the etcd pod
 	// to reverse DNS lookup its IP. The default behavior is to wait forever and has a value of 0.
-	defaultDNSTimeout = int64(0)
+	defaultDNSTimeout         = int64(0)
+	EtcdVersionWithHTTPProbe  = "> 3.5.6"
+	EtcdVersionBreakReadeness = "3.5.6"
 )
 
 func GetEtcdVersion(pod *v1.Pod) string {
@@ -216,9 +219,9 @@ func CreateAndWaitPod(kubecli kubernetes.Interface, ns string, pod *v1.Pod, time
 
 	if err != nil {
 		if retryutil.IsRetryFailure(err) {
-			return nil, fmt.Errorf("failed to wait pod running, it is still pending: %v", err)
+			return nil, fmt.Errorf("failed to wait pod running, it is still pending: %w", err)
 		}
-		return nil, fmt.Errorf("failed to wait pod running: %v", err)
+		return nil, fmt.Errorf("failed to wait pod running: %w", err)
 	}
 
 	return retPod, nil
@@ -301,6 +304,22 @@ func newEtcdPod(m *etcdutil.Member, initialCluster []string, clusterName, state,
 		"--listen-peer-urls=%s --listen-client-urls=%s --advertise-client-urls=%s "+
 		"--initial-cluster=%s --initial-cluster-state=%s",
 		dataDir, m.Name, m.PeerURL(), m.ListenPeerURL(), m.ListenClientURL(), m.ClientURL(), strings.Join(initialCluster, ","), state)
+	etcdVersion, err := semver.NewConstraint(EtcdVersionWithHTTPProbe)
+	if err != nil {
+		logrus.Errorf("erros parsing etcd version %s", EtcdVersionWithHTTPProbe)
+	}
+	version, err := semver.NewVersion(cs.Version)
+	if err != nil {
+		logrus.Errorf("erros parsing etcd version: %s", cs.Version)
+	}
+	if etcdVersion.Check(version) {
+		logrus.Printf("O etcdcluster esta nessa versão: %v", cs.Version)
+		//Command to create pod etcd on versions greater than 3.5.6
+		commands = fmt.Sprintf("/usr/local/bin/etcd --data-dir=%s --name=%s --initial-advertise-peer-urls=%s "+
+			"--listen-peer-urls=%s --listen-client-urls=%s --advertise-client-urls=%s --listen-metrics-urls=%s "+
+			"--initial-cluster=%s --initial-cluster-state=%s --experimental-initial-corrupt-check=true --experimental-watch-progress-notify-interval=5s",
+			dataDir, m.Name, m.PeerURL(), m.ListenPeerURL(), m.ListenClientURL(), m.ClientURL(), m.ListenMetricURL(), strings.Join(initialCluster, ","), state)
+	}
 	if m.SecurePeer {
 		commands += fmt.Sprintf(" --peer-client-cert-auth=true --peer-trusted-ca-file=%[1]s/peer-ca.crt --peer-cert-file=%[1]s/peer.crt --peer-key-file=%[1]s/peer.key", peerTLSDir)
 	}
@@ -316,18 +335,36 @@ func newEtcdPod(m *etcdutil.Member, initialCluster []string, clusterName, state,
 		"etcd_node":    m.Name,
 		"etcd_cluster": clusterName,
 	}
+	var livenessProbe *v1.Probe
+	var readinessProbe *v1.Probe
+	var startupProbe *v1.Probe
 
-	livenessProbe := newEtcdProbe(cs.TLS.IsSecureClient())
-	readinessProbe := newEtcdProbe(cs.TLS.IsSecureClient())
-	readinessProbe.InitialDelaySeconds = 1
-	readinessProbe.TimeoutSeconds = 5
-	readinessProbe.PeriodSeconds = 5
-	readinessProbe.FailureThreshold = 3
-
+	switch {
+	case version.LessThan(semver.MustParse("3.5.7")):
+		logrus.Printf("creating etcd pod with exec probe for etcdcluster version: %v", cs.Version)
+		livenessProbe = NewEtcdProbe(cs.TLS.IsSecureClient())
+		readinessProbe = NewEtcdProbe(cs.TLS.IsSecureClient())
+		readinessProbe.InitialDelaySeconds = 1
+		readinessProbe.TimeoutSeconds = 5
+		readinessProbe.PeriodSeconds = 5
+		readinessProbe.FailureThreshold = 3
+	case version.GreaterThan(semver.MustParse("3.5.6")) && version.LessThan(semver.MustParse("3.5.12")):
+		//Command to create pod etcd on versions greater than 3.5.7 and minor 3.5.11
+		logrus.Printf("creating etcd pod with health probe for etcdcluster version: %v", cs.Version)
+		livenessProbe = NewEtcdLivessProbe(`/health?exclude=NOSPACE&serializable=true`, cs.TLS.IsSecureClient())
+		startupProbe = NewEtcdReadynessProbe(`/health?serializable=false`, cs.TLS.IsSecureClient())
+	case version.GreaterThan(semver.MustParse("3.5.11")):
+		//Command to create pod etcd on versions greater than 3.5.12
+		logrus.Printf("creating etcd pod with liveness probe and readyness for etcdcluster version: %v", cs.Version)
+		livenessProbe = NewEtcdLivessProbe("/livez", cs.TLS.IsSecureClient())
+		readinessProbe = NewEtcdReadynessProbe("/readyz", cs.TLS.IsSecureClient())
+		startupProbe = NewEtcdReadynessProbe("/readyz", cs.TLS.IsSecureClient())
+	}
 	container := containerWithProbes(
 		etcdContainer(strings.Split(commands, " "), cs.Repository, cs.Version),
 		livenessProbe,
-		readinessProbe)
+		readinessProbe,
+		startupProbe)
 
 	volumes := []v1.Volume{}
 
@@ -429,7 +466,7 @@ func MustNewKubeClient() kubernetes.Interface {
 
 func InClusterConfig() (*rest.Config, error) {
 	// Work around https://github.com/kubernetes/kubernetes/issues/40973
-	// See https://github.com/coreos/etcd-operator/issues/731#issuecomment-283804819
+	// See https://github.com/cloud104/etcd-operator/issues/731#issuecomment-283804819
 	if len(os.Getenv("KUBERNETES_SERVICE_HOST")) == 0 {
 		addrs, err := net.LookupHost("kubernetes.default.svc")
 		if err != nil {
@@ -523,3 +560,33 @@ func UniqueMemberName(clusterName string) string {
 	}
 	return clusterName + "-" + suffix
 }
+
+type JSONPatchOperations []JSONPatchOperation
+
+func UnmarshalJSONPatchOperations(data []byte) (JSONPatchOperations, error) {
+	var r JSONPatchOperations
+	err := json.Unmarshal(data, &r)
+
+	return r, err
+}
+
+func (r *JSONPatchOperations) Marshal() ([]byte, error) {
+	return json.Marshal(r)
+}
+
+type JSONPatchOperation struct {
+	Op    Operation `json:"op"`
+	Path  string    `json:"path"`
+	Value any       `json:"value"`
+}
+
+type Operation string
+
+const (
+	OperationAdd     Operation = "add"
+	OperationRemove  Operation = "remove"
+	OperationReplace Operation = "replace"
+	OperationMove    Operation = "move"
+	OperationCopy    Operation = "copy"
+	OperationTest    Operation = "test"
+)

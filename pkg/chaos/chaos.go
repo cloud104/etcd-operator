@@ -45,6 +45,8 @@ type CrashConfig struct {
 }
 
 // TODO: respect context in k8s operations.
+//
+//nolint:gosec
 func (m *Monkeys) CrushPods(ctx context.Context, c *CrashConfig) {
 	burst := int(c.KillRate)
 	if burst <= 0 {
