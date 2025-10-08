@@ -1,4 +1,4 @@
-ETCD_VERSION=3.5.8
+ETCD_VERSION=3.5.16
 REGISTRY=us-east1-docker.pkg.dev/tks-gcr-pub
 IMAGE_PREFIX=etcd-operator
 SHORT_NAME=etcd
