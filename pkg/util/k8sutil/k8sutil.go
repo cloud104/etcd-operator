@@ -18,13 +18,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/Masterminds/semver/v3"
-	"github.com/sirupsen/logrus"
 	"net"
 	"net/url"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/Masterminds/semver/v3"
+	"github.com/sirupsen/logrus"
 
 	api "github.com/cloud104/etcd-operator/pkg/apis/etcd/v1beta2"
 	"github.com/cloud104/etcd-operator/pkg/util/etcdutil"
@@ -123,13 +124,15 @@ fi
 			Name:  "restore-datadir",
 			Image: ImageName(repo, version),
 			Command: []string{
-				"/bin/sh", "-ec",
-				fmt.Sprintf("ETCDCTL_API=3 etcdctl snapshot restore %[1]s"+
-					" --name %[2]s"+
-					" --initial-cluster %[2]s=%[3]s"+
-					" --initial-cluster-token %[4]s"+
-					" --initial-advertise-peer-urls %[3]s"+
-					" --data-dir %[5]s 2>/dev/termination-log", backupFile, m.Name, m.PeerURL(), token, dataDir),
+				"etcdutl",
+			},
+			Args: []string{
+				"snapshot", "restore", backupFile,
+				"--name", m.Name,
+				"--initial-cluster", fmt.Sprintf("%s=%s", m.Name, m.PeerURL()),
+				"--initial-cluster-token", token,
+				"--initial-advertise-peer-urls", m.PeerURL(),
+				"--data-dir", dataDir,
 			},
 			VolumeMounts: etcdVolumeMounts(),
 		},
