@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: etcd-restore-operator
-        image: us-east1-docker.pkg.dev/tks-gcr-pub/etcd-operator/etcd-operator:v0.10.5-RC-tks
+        image: us-east1-docker.pkg.dev/tks-gcr-pub/etcd-operator/etcd-operator:v0.10.8-tks
         command:
         - etcd-restore-operator
         env:
@@ -28,3 +28,5 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
+        - name: RESTORE_INIT_IMAGE_PULL_POLICY
+          value: IfNotPresent # Always, Never ou IfNotPresent
