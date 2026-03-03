@@ -73,9 +73,10 @@ const (
 
 	// defaultDNSTimeout is the default maximum allowed time for the init container of the etcd pod
 	// to reverse DNS lookup its IP. The default behavior is to wait forever and has a value of 0.
-	defaultDNSTimeout         = int64(0)
-	EtcdVersionWithHTTPProbe  = "> 3.5.6"
-	EtcdVersionBreakReadeness = "3.5.6"
+	defaultDNSTimeout            = int64(0)
+	EtcdVersionWithHTTPProbe     = "> 3.5.6"
+	EtcdVersionBreakReadeness    = "3.5.6"
+	initContainerImagePullPolicy = "RESTORE_INIT_IMAGE_PULL_POLICY"
 )
 
 func GetEtcdVersion(pod *v1.Pod) string {
@@ -103,6 +104,7 @@ func PVCNameFromMember(memberName string) string {
 }
 
 func makeRestoreInitContainers(backupURL *url.URL, token, repo, version string, m *etcdutil.Member) []v1.Container {
+	pullPolicy := restoreInitContainerImagePullPolicy()
 	return []v1.Container{
 		{
 			Name:  "fetch-backup",
@@ -118,7 +120,8 @@ if [[ "$httpcode" != "200" ]]; then
 fi
 					`, backupFile, backupURL.String()),
 			},
-			VolumeMounts: etcdVolumeMounts(),
+			VolumeMounts:    etcdVolumeMounts(),
+			ImagePullPolicy: pullPolicy,
 		},
 		{
 			Name:  "restore-datadir",
@@ -134,8 +137,22 @@ fi
 				"--initial-advertise-peer-urls", m.PeerURL(),
 				"--data-dir", dataDir,
 			},
-			VolumeMounts: etcdVolumeMounts(),
+			VolumeMounts:    etcdVolumeMounts(),
+			ImagePullPolicy: pullPolicy,
 		},
+	}
+}
+
+func restoreInitContainerImagePullPolicy() v1.PullPolicy {
+	val := strings.TrimSpace(os.Getenv(initContainerImagePullPolicy))
+	switch v1.PullPolicy(val) {
+	case v1.PullAlways, v1.PullNever, v1.PullIfNotPresent:
+		return v1.PullPolicy(val)
+	case "":
+		return v1.PullIfNotPresent
+	default:
+		logrus.Warnf("invalid %s value %q: falling back to %s", initContainerImagePullPolicy, val, v1.PullIfNotPresent)
+		return v1.PullIfNotPresent
 	}
 }
 
@@ -371,6 +388,8 @@ func newEtcdPod(m *etcdutil.Member, initialCluster []string, clusterName, state,
 
 	volumes := []v1.Volume{}
 
+	pullPolicy := restoreInitContainerImagePullPolicy()
+
 	if m.SecurePeer {
 		container.VolumeMounts = append(container.VolumeMounts, v1.VolumeMount{
 			MountPath: peerTLSDir,
@@ -415,6 +434,7 @@ func newEtcdPod(m *etcdutil.Member, initialCluster []string, clusterName, state,
 				// In etcd 3.2, TLS listener will do a reverse-DNS lookup for pod IP -> hostname.
 				// If DNS entry is not warmed up, it will return empty result and peer connection will be rejected.
 				// In some cases the DNS is not created correctly so we need to time out after a given period.
+				ImagePullPolicy: pullPolicy,
 				Command: []string{"/bin/sh", "-c", fmt.Sprintf(`
 					TIMEOUT_READY=%d
 					while ( ! nslookup %s )
