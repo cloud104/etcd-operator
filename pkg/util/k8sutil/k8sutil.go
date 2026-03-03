@@ -73,10 +73,10 @@ const (
 
 	// defaultDNSTimeout is the default maximum allowed time for the init container of the etcd pod
 	// to reverse DNS lookup its IP. The default behavior is to wait forever and has a value of 0.
-	defaultDNSTimeout            = int64(0)
-	EtcdVersionWithHTTPProbe     = "> 3.5.6"
-	EtcdVersionBreakReadeness    = "3.5.6"
-	initContainerImagePullPolicy = "RESTORE_INIT_IMAGE_PULL_POLICY"
+	defaultDNSTimeout             = int64(0)
+	EtcdVersionWithHTTPProbe      = "> 3.5.6"
+	EtcdVersionBreakReadeness     = "3.5.6"
+	restoreInitImagePullPolicyEnv = "RESTORE_INIT_IMAGE_PULL_POLICY"
 )
 
 func GetEtcdVersion(pod *v1.Pod) string {
@@ -144,14 +144,14 @@ fi
 }
 
 func restoreInitContainerImagePullPolicy() v1.PullPolicy {
-	val := strings.TrimSpace(os.Getenv(initContainerImagePullPolicy))
-	switch v1.PullPolicy(val) {
+	val := strings.TrimSpace(os.Getenv(restoreInitImagePullPolicyEnv))
+	switch pp := v1.PullPolicy(val); pp {
 	case v1.PullAlways, v1.PullNever, v1.PullIfNotPresent:
-		return v1.PullPolicy(val)
+		return pp
 	case "":
 		return v1.PullIfNotPresent
 	default:
-		logrus.Warnf("invalid %s value %q: falling back to %s", initContainerImagePullPolicy, val, v1.PullIfNotPresent)
+		logrus.Warnf("invalid %s value %q: falling back to %s", restoreInitImagePullPolicyEnv, val, v1.PullIfNotPresent)
 		return v1.PullIfNotPresent
 	}
 }

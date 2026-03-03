@@ -29,4 +29,4 @@ spec:
             fieldRef:
               fieldPath: metadata.name
         - name: RESTORE_INIT_IMAGE_PULL_POLICY
-          value: Always|Never|IfNotPresent
+          value: IfNotPresent # Always, Never ou IfNotPresent
