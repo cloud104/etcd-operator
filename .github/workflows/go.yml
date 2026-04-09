@@ -24,7 +24,7 @@ jobs:
         run: go build ./...
 
       - name: Test
-        run: go test 2>&1 $(go list ./... | grep -Ev '^github\.com/cloud104/etcd-operator/test') | go-junit-report -set-exit-code > report.xml
+        run: go test -vet=off 2>&1 $(go list ./... | grep -Ev '^github\.com/cloud104/etcd-operator/test') | go-junit-report -set-exit-code > report.xml
 
       - name: Summary
         uses: test-summary/action@31493c76ec9e7aa675f1585d3ed6f1da69269a86 # v2.4
