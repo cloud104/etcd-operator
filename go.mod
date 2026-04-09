@@ -1,6 +1,6 @@
 module github.com/cloud104/etcd-operator
 
-go 1.25.0
+go 1.25.9
 
 require (
 	cloud.google.com/go/storage v1.46.0
