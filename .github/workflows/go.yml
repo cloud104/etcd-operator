@@ -1,0 +1,33 @@
+name: Go
+
+on:
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+
+  test:
+    runs-on: tks-gha-runner
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up Go
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        with:
+          go-version-file: 'go.mod'
+
+      - name: Install report tool
+        run: go install github.com/jstemmer/go-junit-report/v2@v2.1.0
+
+      - name: Build
+        run: go build ./...
+
+      - name: Test
+        run: go test -vet=off 2>&1 $(go list ./... | grep -Ev '^github\.com/cloud104/etcd-operator/test') | go-junit-report -set-exit-code > report.xml
+
+      - name: Summary
+        uses: test-summary/action@31493c76ec9e7aa675f1585d3ed6f1da69269a86 # v2.4
+        with:
+          paths: report.xml
+        if: always()
