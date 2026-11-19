@@ -369,16 +369,22 @@ func newEtcdPod(m *etcdutil.Member, initialCluster []string, clusterName, state,
 		readinessProbe.PeriodSeconds = 5
 		readinessProbe.FailureThreshold = 3
 	case version.GreaterThan(semver.MustParse("3.5.6")) && version.LessThan(semver.MustParse("3.5.12")):
-		//Command to create pod etcd on versions greater than 3.5.7 and minor 3.5.11
+		// etcd 3.5.7..3.5.11:
+		// - liveness/startup use serializable=true (local read, no Raft quorum required) and exclude=NOSPACE
+		//   so temporary quorum loss, initial snapshot sync, or full storage quota will not kill the container.
+		// - readiness uses serializable=false (linearizable read requiring Raft quorum) to gate client traffic.
 		logrus.Printf("creating etcd pod with health probe for etcdcluster version: %v", cs.Version)
 		livenessProbe = NewEtcdLivessProbe(`/health?exclude=NOSPACE&serializable=true`, cs.TLS.IsSecureClient())
-		startupProbe = NewEtcdReadynessProbe(`/health?serializable=false`, cs.TLS.IsSecureClient())
+		readinessProbe = NewEtcdReadynessProbe(`/health?serializable=false`, cs.TLS.IsSecureClient())
+		startupProbe = NewEtcdStartupProbe(`/health?exclude=NOSPACE&serializable=true`, cs.TLS.IsSecureClient())
 	case version.GreaterThan(semver.MustParse("3.5.11")):
-		//Command to create pod etcd on versions greater than 3.5.12
+		// etcd >= 3.5.12 provides dedicated endpoints:
+		// - /livez (serializable=true, excludes NOSPACE) for probes that kill the container (liveness/startup).
+		// - /readyz (serializable=false, requires Raft quorum) only for readiness to gate Service traffic.
 		logrus.Printf("creating etcd pod with liveness probe and readyness for etcdcluster version: %v", cs.Version)
 		livenessProbe = NewEtcdLivessProbe("/livez", cs.TLS.IsSecureClient())
 		readinessProbe = NewEtcdReadynessProbe("/readyz", cs.TLS.IsSecureClient())
-		startupProbe = NewEtcdReadynessProbe("/readyz", cs.TLS.IsSecureClient())
+		startupProbe = NewEtcdStartupProbe("/livez", cs.TLS.IsSecureClient())
 	}
 	container := containerWithProbes(
 		etcdContainer(strings.Split(commands, " "), cs.Repository, cs.Version),

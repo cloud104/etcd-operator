@@ -79,6 +79,8 @@ func containerWithRequirements(c v1.Container, r v1.ResourceRequirements) v1.Con
 	return c
 }
 
+// NewEtcdLivessProbe checks if the local etcd process is alive.
+// Uses a long period (60s) because a failure kills the container (restartPolicy: Never).
 func NewEtcdLivessProbe(path string, isSecure bool) *v1.Probe {
 	return &v1.Probe{
 		ProbeHandler: v1.ProbeHandler{
@@ -98,6 +100,9 @@ func NewEtcdLivessProbe(path string, isSecure bool) *v1.Probe {
 		FailureThreshold:    3,
 	}
 }
+
+// NewEtcdReadynessProbe checks if the member has Raft quorum and is ready to serve client traffic.
+// Failures only remove the pod from Service endpoints without killing the container.
 func NewEtcdReadynessProbe(path string, isSecure bool) *v1.Probe {
 	return &v1.Probe{
 		ProbeHandler: v1.ProbeHandler{
@@ -115,6 +120,28 @@ func NewEtcdReadynessProbe(path string, isSecure bool) *v1.Probe {
 		TimeoutSeconds:      5,
 		PeriodSeconds:       5,
 		FailureThreshold:    3,
+	}
+}
+
+// NewEtcdStartupProbe gives etcd up to 240s (24 * 10s) to finish initial DB load,
+// snapshot restore, and corruption checks before liveness probes take over.
+func NewEtcdStartupProbe(path string, isSecure bool) *v1.Probe {
+	return &v1.Probe{
+		ProbeHandler: v1.ProbeHandler{
+			HTTPGet: &v1.HTTPGetAction{
+				Path: path,
+				Port: intstr.IntOrString{
+					Type:   intstr.Int,
+					IntVal: 2381,
+				},
+				Scheme:      "HTTP",
+				HTTPHeaders: nil,
+			},
+		},
+		InitialDelaySeconds: 10,
+		TimeoutSeconds:      10,
+		PeriodSeconds:       10,
+		FailureThreshold:    24,
 	}
 }
 
